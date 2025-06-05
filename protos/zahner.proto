@@ -1,0 +1,343 @@
+syntax = "proto3";
+
+package zahner;
+
+message SessionRequest {
+    string session_id = 1;
+}
+
+service ZahnerZennium {
+    rpc ConnectToTerm (ConnectRequest) returns (ConnectResponse);
+    rpc DisconnectFromTerm (SessionRequest) returns (DisconnectResponse);
+    rpc CalibrateOffsets (SessionRequest) returns (StringResponse);
+    rpc GetPotential (SessionRequest) returns (PotentialResponse);
+    rpc SetPotential (SetPotentialRequest) returns (StringResponse);
+    rpc GetCurrent (SessionRequest) returns (CurrentResponse);
+    rpc SetCurrent (SetCurrentRequest) returns (StringResponse);
+    rpc SetPotentiostatMode (ModeRequest) returns (StringResponse);
+    rpc SetFrequency (FrequencyRequest) returns (StringResponse);
+    rpc SetAmplitude (AmplitudeRequest) returns (StringResponse);
+    rpc SetNumberOfPeriods (PeriodsRequest) returns (StringResponse);
+    rpc EnablePotentiostat (EnablePotentiostatRequest) returns (StringResponse);
+    rpc DisablePotentiostat (SessionRequest) returns (StringResponse);
+    rpc GetImpedance (ImpedanceRequest) returns (ImpedanceResponse);
+    rpc SetEISNaming (SetEISNamingRequest) returns (StringResponse);
+    rpc SetEISCounter (SetEISCounterRequest) returns (StringResponse);
+    rpc SetEISOutputPath (SetEISOutputPathRequest) returns (StringResponse);
+    rpc SetEISOutputFileName (SetEISOutputFileNameRequest) returns (StringResponse);
+    rpc SetUpperFrequencyLimit (SetUpperFrequencyLimitRequest) returns (StringResponse);
+    rpc SetLowerFrequencyLimit (SetLowerFrequencyLimitRequest) returns (StringResponse);
+    rpc SetStartFrequency (SetStartFrequencyRequest) returns (StringResponse);
+    rpc SetUpperStepsPerDecade (SetUpperStepsPerDecadeRequest) returns (StringResponse);
+    rpc SetLowerStepsPerDecade (SetLowerStepsPerDecadeRequest) returns (StringResponse);
+    rpc SetUpperNumberOfPeriods (SetUpperNumberOfPeriodsRequest) returns (StringResponse);
+    rpc SetLowerNumberOfPeriods (SetLowerNumberOfPeriodsRequest) returns (StringResponse);
+    rpc SetScanDirection (SetScanDirectionRequest) returns (StringResponse);
+    rpc SetScanStrategy (SetScanStrategyRequest) returns (StringResponse);
+    rpc SetupPad4Channel (SetupPad4ChannelRequest) returns (StringResponse);
+    rpc SetupPad4ChannelWithVoltageRange (SetupPad4ChannelWithVoltageRangeRequest) returns (StringResponse);
+    rpc SetupPad4ChannelWithShuntResistor (SetupPad4ChannelWithShuntResistorRequest) returns (StringResponse);
+    rpc SetupPad4ModeGlobal (SetupPad4ModeGlobalRequest) returns (StringResponse);
+    rpc EnablePad4Global (EnablePad4GlobalRequest) returns (StringResponse);
+    rpc DisablePad4Global (DisablePad4GlobalRequest) returns (StringResponse);
+    rpc ReadPad4Setup (SessionRequest) returns (StringResponse);
+    rpc MeasureEIS (SessionRequest) returns (StringResponse);
+}
+
+service ThalesFile {
+    rpc ConnectToTerm (FileServiceConnectRequest) returns (FileServiceConnectResponse);
+    rpc DisconnectFromTerm (SessionRequest) returns (DisconnectResponse);
+    rpc EnableAutomaticFileExchange (EnableAutomaticFileExchangeRequest) returns (StringResponse);
+    rpc DisableAutomaticFileExchange (SessionRequest) returns (StringResponse);
+    rpc AcquireFile (AcquireFileRequest) returns (FileObjectResponse);
+    rpc AppendFilesToSkip (AppendFilesToSkipRequest) returns (StringResponse);
+    rpc SetSavePath (SetSavePathRequest) returns (StringResponse);
+    rpc EnableSaveReceivedFilesToDisk (EnableSaveReceivedFilesToDiskRequest) returns (StringResponse);
+    rpc DisableSaveReceivedFilesToDisk (SessionRequest) returns (StringResponse);
+    rpc EnableKeepReceivedFilesInObject (SessionRequest) returns (StringResponse);
+    rpc DisableKeepReceivedFilesInObject (DisableKeepReceivedFilesInObjectRequest) returns (StringResponse);
+    rpc GetReceivedFiles (SessionRequest) returns (FileObjectsResponse);
+    rpc GetLatestReceivedFile (SessionRequest) returns (FileObjectResponse);
+    rpc SaveReceivedFile (SaveReceivedFileRequest) returns (StringResponse);
+    rpc DeleteReceivedFiles (SessionRequest) returns (StringResponse);
+}
+
+message SetPotentialRequest {
+    string session_id = 1;
+    double potential = 2;
+}
+
+message SetCurrentRequest {
+    string session_id = 1;
+    double current = 2;
+}
+
+message ModeRequest {
+    string session_id = 1;
+    enum PotentiostatMode {
+        POTENTIOSTATIC = 0;
+        GALVANOSTATIC = 1;
+        PSEUDOGALVANOSTATIC = 2;
+    }
+    PotentiostatMode mode = 2;
+}
+
+message FrequencyRequest {
+    string session_id = 1;
+    double frequency = 2;
+}
+
+message AmplitudeRequest {
+    string session_id = 1;
+    double amplitude = 2;
+}
+
+message PeriodsRequest {
+    string session_id = 1;
+    int32 num_periods = 2;
+}
+
+message EnablePotentiostatRequest {
+    string session_id = 1;
+    bool enable = 2;
+}
+
+message ImpedanceRequest {
+    string session_id = 1;
+}
+
+message SetEISCounterRequest {
+    string session_id = 1;
+    int32 number = 2;
+}
+
+message SetEISOutputPathRequest {
+    string session_id = 1;
+    string path = 2;
+}
+
+message SetEISOutputFileNameRequest {
+    string session_id = 1;
+    string name = 2;
+}
+
+message SetUpperFrequencyLimitRequest {
+    string session_id = 1;
+    double frequency = 2;
+}
+
+message SetLowerFrequencyLimitRequest {
+    string session_id = 1;
+    double frequency = 2;
+}
+
+message SetStartFrequencyRequest {
+    string session_id = 1;
+    double frequency = 2;
+}
+
+message SetUpperStepsPerDecadeRequest {
+    string session_id = 1;
+    int32 steps = 2;
+}
+
+message SetLowerStepsPerDecadeRequest {
+    string session_id = 1;
+    int32 steps = 2;
+}
+
+message SetUpperNumberOfPeriodsRequest {
+    string session_id = 1;
+    int32 periods = 2;
+}
+
+message SetLowerNumberOfPeriodsRequest {
+    string session_id = 1;
+    int32 periods = 2;
+}
+
+message FileServiceConnectRequest {
+    string session_id = 1;
+    string host = 2;
+}
+
+message FileServiceConnectResponse {
+    bool success = 1;
+    string message = 2;
+    string session_id = 3;
+}
+
+message FileObject {
+    string name = 1;
+    string path = 2;
+    bytes binary_data = 3;
+}
+
+message EnableAutomaticFileExchangeRequest {
+    string session_id = 1;
+    bool enable = 2;
+    string file_extensions = 3;
+}
+
+message AcquireFileRequest {
+    string session_id = 1;
+    string filename = 2;
+}
+
+message AppendFilesToSkipRequest {
+    string session_id = 1;
+    string filename = 2;
+}
+
+message SetSavePathRequest {
+    string session_id = 1;
+    string path = 2;
+}
+
+message EnableSaveReceivedFilesToDiskRequest {
+    string session_id = 1;
+    string path = 2;
+    bool enable = 3;
+}
+
+message SaveReceivedFileRequest {
+    string session_id = 1;
+    FileObject file = 2;
+}
+
+message DisableKeepReceivedFilesInObjectRequest {
+    string session_id = 1;
+}
+
+message FileObjectResponse {
+    bool success = 1;
+    string message = 2;
+    FileObject file = 3;
+}
+
+message FileObjectsResponse {
+    bool success = 1;
+    string message = 2;
+    repeated FileObject files = 3;
+}
+
+message SetupPad4ChannelRequest {
+    string session_id = 1;
+    int32 card = 2;
+    int32 channel = 3;
+    bool enabled = 4;
+}
+
+message SetupPad4ChannelWithVoltageRangeRequest {
+    string session_id = 1;
+    int32 card = 2;
+    int32 channel = 3;
+    bool enabled = 4;
+    double voltage_range = 5;
+}
+
+message SetupPad4ChannelWithShuntResistorRequest {
+    string session_id = 1;
+    int32 card = 2;
+    int32 channel = 3;
+    bool enabled = 4;
+    double shunt_resistor = 5;
+}
+
+message SetupPad4ModeGlobalRequest {
+    string session_id = 1;
+    enum Pad4Mode {
+        VOLTAGE = 0;
+        CURRENT = 1;
+    }
+    Pad4Mode mode = 2;
+}
+
+message EnablePad4GlobalRequest {
+    string session_id = 1;
+    bool enabled = 2;
+}
+
+message DisablePad4GlobalRequest {
+    string session_id = 1;
+}
+
+message SetScanStrategyRequest {
+    string session_id = 1;
+    enum ScanStrategy {
+        SINGLE_SINE = 0;
+        MULTI_SINE = 1;
+        TABLE = 2;
+    }
+    ScanStrategy strategy = 2;
+}
+
+message SetScanDirectionRequest {
+    string session_id = 1;
+    enum ScanDirection {
+        START_TO_MIN = 0;
+        START_TO_MAX = 1;
+    }
+    ScanDirection direction = 2;
+}
+
+message SetEISNamingRequest {
+    string session_id = 1;
+    enum NamingRule {
+        DATETIME = 0;
+        COUNTER = 1;
+        INDIVIDUAL = 2;
+    }
+    NamingRule naming = 2;
+}
+
+message ComplexNumber {
+    double real = 1;
+    double imag = 2;
+}
+
+message ConnectRequest {
+    string session_id = 1;
+    string host = 2;
+    enum Mode {
+        SCRIPT_REMOTE = 0;
+        WATCH = 1;
+        LOGGING = 2;
+    }
+    Mode selected_mode = 3;
+}
+
+message ConnectResponse {
+    bool success = 1;
+    string message = 2;
+    string session_id = 3;
+}
+
+message DisconnectResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message PotentialResponse {
+    bool success = 1;
+    string message = 2;
+    double potential = 3;
+}
+
+message CurrentResponse {
+    bool success = 1;
+    string message = 2;
+    double current = 3;
+}
+
+message ImpedanceResponse {
+    bool success = 1;
+    string message = 2;
+    ComplexNumber impedance = 3;
+}
+
+message StringResponse {
+    bool success = 1;
+    string message = 2;
+    string reply = 3;
+}
