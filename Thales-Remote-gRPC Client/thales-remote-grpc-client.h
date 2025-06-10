@@ -12,8 +12,8 @@ public:
 		: stub_(ThalesFile::NewStub(channel)) {
 	}
 
-	// Sends a request to connect to the terminal
-	std::string connectToTerm(const std::string& session_id, const std::string& host) {
+	// Sends a request to connect to the terminal	
+	FileServiceConnectResponse connectToTerm(const std::string& session_id, const std::string& host) {
 		// Prepare request
 		FileServiceConnectRequest request;
 		request.set_session_id(session_id);
@@ -29,16 +29,17 @@ public:
 
 		// Returns results based on RPC status
 		if (status.ok()) {
-			return response.message();
+			return response;
 		}
-		else {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return "RPC Failed";
-		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Sends a request to connect to the terminal
-	std::string disconnectFromTerm(const std::string& session_id) {
+	DisconnectResponse disconnectFromTerm(const std::string& session_id) {
 		// Prepare request
 		SessionRequest request;
 		request.set_session_id(session_id);
@@ -53,15 +54,16 @@ public:
 
 		// Returns results based on RPC status
 		if (status.ok()) {
-			return response.message();
+			return response;
 		}
-		else {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return "RPC Failed";
-		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	zahner::FileObject acquireFile(const std::string& session_id, const std::string& filename) {
+	FileObjectResponse acquireFile(const std::string& session_id, const std::string& filename) {
 		// Prepare request
 		AcquireFileRequest request;
 		request.set_session_id(session_id);
@@ -75,15 +77,19 @@ public:
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->AcquireFile(&context, request, &response);
 
-		if (!status.ok()) {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return zahner::FileObject();
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
 		}
-		return response.file();
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Sends a request to enable keeping received files in the object
-	std::string enableKeepReceivedFilesInObject(const std::string& session_id) {
+	StringResponse enableKeepReceivedFilesInObject(const std::string& session_id) {
 		zahner::SessionRequest request;
 		request.set_session_id(session_id);
 
@@ -93,11 +99,19 @@ public:
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->EnableKeepReceivedFilesInObject(&context, request, &response);
 
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Sends a request to enable automatic file exchange
-	std::string enableAutomaticFileExchange(const std::string& session_id, const bool enable, const std::string& file_extensions) {
+StringResponse enableAutomaticFileExchange(const std::string& session_id, const bool enable, const std::string& file_extensions) {
 		zahner::EnableAutomaticFileExchangeRequest request;
 		request.set_session_id(session_id);
 		request.set_enable(enable);
@@ -109,10 +123,18 @@ public:
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->EnableAutomaticFileExchange(&context, request, &response);
 
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string disableAutomaticFileExchange(const std::string& session_id) {
+	StringResponse disableAutomaticFileExchange(const std::string& session_id) {
 		zahner::SessionRequest request;
 		request.set_session_id(session_id);
 
@@ -122,11 +144,19 @@ public:
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->DisableAutomaticFileExchange(&context, request, &response);
 
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Sends a request to retrieve received files
-	std::vector<zahner::FileObject> getReceivedFiles(const std::string& session_id) {
+	FileObjectsResponse getReceivedFiles(const std::string& session_id) {
 		// Prepare request
 		zahner::SessionRequest request;
 		request.set_session_id(session_id);
@@ -142,21 +172,21 @@ public:
 		// Construct response struct
 		std::vector<zahner::FileObject> result;
 
-		if (!status.ok()) {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return result;
+		// Returns results based on RPC status
+		if (status.ok()) {
+			// populate the vector with received files
+			for (const auto& file : response.files()) {
+				result.push_back(file);
+			}
+			return response;
 		}
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
 
-		// populate the vector with received files
-		for (const auto& file : response.files()) {
-			result.push_back(file);
-		}
-
-
-		return result;
+		return response;
 	}
 
-	std::string deleteReceivedFiles(const std::string& session_id) {
+StringResponse deleteReceivedFiles(const std::string& session_id) {
 		zahner::SessionRequest request;
 		request.set_session_id(session_id);
 
@@ -166,22 +196,21 @@ public:
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->DeleteReceivedFiles(&context, request, &response);
 
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 
 private:
 	std::unique_ptr<ThalesFile::Stub> stub_;
 
-	std::string handleResponse(grpc::Status status, const zahner::StringResponse& response) {
-		if (status.ok()) {
-			return response.reply();
-		}
-		else {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return "Operation Failed";
-		}
-	}
 };
 
 class ZahnerClient {
@@ -190,7 +219,7 @@ public:
 		: stub_(ZahnerZennium::NewStub(channel)) {
 	}
 
-	std::string setEISCounter(const std::string& session_id, const int32_t number) {
+	StringResponse setEISCounter(const std::string& session_id, const int32_t number) {
 		// Prepare request
 		SetEISCounterRequest request;
 		request.set_session_id(session_id);
@@ -204,10 +233,18 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetEISCounter(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setEISNaming(const std::string& session_id, const SetEISNamingRequest_NamingRule namingrule) {
+	StringResponse setEISNaming(const std::string& session_id, const SetEISNamingRequest_NamingRule namingrule) {
 		// Prepare request
 		SetEISNamingRequest request;
 		request.set_session_id(session_id);
@@ -220,10 +257,18 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetEISNaming(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setEISOutputPath(const std::string& session_id, const std::string& output_path) {
+	StringResponse setEISOutputPath(const std::string& session_id, const std::string& output_path) {
 		// Prepare request
 		zahner::SetEISOutputPathRequest request;
 		request.set_session_id(session_id);
@@ -236,10 +281,18 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetEISOutputPath(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setEISOutputFileName(const std::string& session_id, const std::string& file_name) {
+	StringResponse setEISOutputFileName(const std::string& session_id, const std::string& file_name) {
 		// Prepare request
 		zahner::SetEISOutputFileNameRequest request;
 		request.set_session_id(session_id);
@@ -252,10 +305,18 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetEISOutputFileName(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string measureEIS(const std::string& session_id) {
+	StringResponse measureEIS(const std::string& session_id) {
 		// Prepare request
 		zahner::SessionRequest request;
 		request.set_session_id(session_id);
@@ -267,11 +328,19 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->MeasureEIS(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 
-	std::string setupPad4ChannelWithVoltageRange(const std::string& session_id, int32_t card, int32_t channel, bool enabled, double voltage_range) {
+	StringResponse setupPad4ChannelWithVoltageRange(const std::string& session_id, int32_t card, int32_t channel, bool enabled, double voltage_range) {
 		// Prepare request
 		zahner::SetupPad4ChannelWithVoltageRangeRequest request;
 		request.set_session_id(session_id);
@@ -287,10 +356,18 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetupPad4ChannelWithVoltageRange(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setupPad4ModeGlobal(const std::string& session_id, zahner::SetupPad4ModeGlobalRequest::Pad4Mode mode) {
+	StringResponse setupPad4ModeGlobal(const std::string& session_id, zahner::SetupPad4ModeGlobalRequest::Pad4Mode mode) {
 		// Prepare request
 		zahner::SetupPad4ModeGlobalRequest request;
 		request.set_session_id(session_id);
@@ -303,10 +380,18 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetupPad4ModeGlobal(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string enablePad4Global(const std::string& session_id, bool enabled) {
+	StringResponse enablePad4Global(const std::string& session_id, bool enabled) {
 		// Prepare request
 		zahner::EnablePad4GlobalRequest request;
 		request.set_session_id(session_id);
@@ -319,10 +404,18 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->EnablePad4Global(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setLowerFrequencyLimit(const std::string& session_id, double frequency) {
+	StringResponse setLowerFrequencyLimit(const std::string& session_id, double frequency) {
 		zahner::SetLowerFrequencyLimitRequest request;
 		request.set_session_id(session_id);
 		request.set_frequency(frequency);
@@ -332,10 +425,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->SetLowerFrequencyLimit(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setUpperFrequencyLimit(const std::string& session_id, double frequency) {
+	StringResponse setUpperFrequencyLimit(const std::string& session_id, double frequency) {
 		zahner::SetUpperFrequencyLimitRequest request;
 		request.set_session_id(session_id);
 		request.set_frequency(frequency);
@@ -345,10 +446,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->SetUpperFrequencyLimit(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setLowerNumberOfPeriods(const std::string& session_id, int32_t periods) {
+	StringResponse setLowerNumberOfPeriods(const std::string& session_id, int32_t periods) {
 		zahner::SetLowerNumberOfPeriodsRequest request;
 		request.set_session_id(session_id);
 		request.set_periods(periods);
@@ -358,10 +467,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->SetLowerNumberOfPeriods(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setLowerStepsPerDecade(const std::string& session_id, int32_t steps) {
+	StringResponse setLowerStepsPerDecade(const std::string& session_id, int32_t steps) {
 		zahner::SetLowerStepsPerDecadeRequest request;
 		request.set_session_id(session_id);
 		request.set_steps(steps);
@@ -371,10 +488,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->SetLowerStepsPerDecade(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setUpperNumberOfPeriods(const std::string& session_id, int32_t periods) {
+	StringResponse setUpperNumberOfPeriods(const std::string& session_id, int32_t periods) {
 		zahner::SetUpperNumberOfPeriodsRequest request;
 		request.set_session_id(session_id);
 		request.set_periods(periods);
@@ -384,10 +509,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->SetUpperNumberOfPeriods(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setScanDirection(const std::string& session_id, zahner::SetScanDirectionRequest::ScanDirection direction) {
+	StringResponse setScanDirection(const std::string& session_id, zahner::SetScanDirectionRequest::ScanDirection direction) {
 		zahner::SetScanDirectionRequest request;
 		request.set_session_id(session_id);
 		request.set_direction(direction);
@@ -397,23 +530,36 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->SetScanDirection(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setScanStrategy(const std::string& session_id, zahner::SetScanStrategyRequest::ScanStrategy strategy) {
-		zahner::SetScanStrategyRequest request;
-		request.set_session_id(session_id);
-		request.set_strategy(strategy);
+	StringResponse setScanStrategy(const SetScanStrategyRequest request) {
 
 		zahner::StringResponse response;
 		grpc::ClientContext context;
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->SetScanStrategy(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setUpperStepsPerDecade(const std::string& session_id, int32_t steps) {
+	StringResponse setUpperStepsPerDecade(const std::string& session_id, int32_t steps) {
 		zahner::SetUpperStepsPerDecadeRequest request;
 		request.set_session_id(session_id);
 		request.set_steps(steps);
@@ -423,10 +569,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));
 		grpc::Status status = stub_->SetUpperStepsPerDecade(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setStartFrequency(const std::string& session_id, double frequency) {
+	StringResponse setStartFrequency(const std::string& session_id, double frequency) {
 		// Prepare request
 		zahner::SetStartFrequencyRequest request;
 		request.set_session_id(session_id);
@@ -439,13 +593,21 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetStartFrequency(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 
 
 	// Sends a request to calibrate offsets
-	std::string calibrateOffsets(const std::string& session_id) {
+	StringResponse calibrateOffsets(const std::string& session_id) {
 		// Prepare request
 		SessionRequest request;
 		request.set_session_id(session_id);
@@ -458,11 +620,19 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->CalibrateOffsets(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Sends a request to set the potentiostat mode
-	std::string setPotentiostatMode(const std::string& session_id, ModeRequest::PotentiostatMode mode) {
+	StringResponse setPotentiostatMode(const std::string& session_id, ModeRequest::PotentiostatMode mode) {
 		// Prepare request
 		ModeRequest request;
 		request.set_session_id(session_id);
@@ -475,11 +645,19 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetPotentiostatMode(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Sends a request to set the potential value
-	std::string setPotential(const std::string& session_id, double potential) {
+	StringResponse setPotential(const std::string& session_id, double potential) {
 		// Prepare request
 		SetPotentialRequest request;
 		request.set_session_id(session_id);
@@ -492,11 +670,19 @@ public:
 		// Remote Procedure Call
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetPotential(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Sends a request to connect to the terminal
-	std::string connectToTerm(const std::string& session_id, const std::string& host, ConnectRequest::Mode selected_mode) {
+	ConnectResponse connectToTerm(const std::string& session_id, const std::string& host, ConnectRequest::Mode selected_mode) {
 		// Prepare request
 		ConnectRequest request;
 		request.set_session_id(session_id);
@@ -513,16 +699,17 @@ public:
 
 		// Returns results based on RPC status
 		if (status.ok()) {
-			return response.message();
+			return response;
 		}
-		else {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return "RPC Failed";
-		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Sends a request to connect to the terminal
-	std::string disconnectFromTerm(const std::string& session_id) {
+	DisconnectResponse disconnectFromTerm(const std::string& session_id) {
 		// Prepare request
 		SessionRequest request;
 		request.set_session_id(session_id);
@@ -537,15 +724,16 @@ public:
 
 		// Returns results based on RPC status
 		if (status.ok()) {
-			return response.message();
+			return response;
 		}
-		else {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return "RPC Failed";
-		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string enablePotentiostat(const std::string& session_id, bool enable) {
+	StringResponse enablePotentiostat(const std::string& session_id, bool enable) {
 		EnablePotentiostatRequest request;
 		request.set_session_id(session_id);
 		request.set_enable(enable);
@@ -555,10 +743,19 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->EnablePotentiostat(&context, request, &response);
-		return handleResponse(status, response);
+
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string disablePotentiostat(const std::string& session_id) {
+	StringResponse disablePotentiostat(const std::string& session_id) {
 		SessionRequest request;
 		request.set_session_id(session_id);
 
@@ -567,10 +764,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->DisablePotentiostat(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setFrequency(const std::string& session_id, double frequency) {
+	StringResponse setFrequency(const std::string& session_id, double frequency) {
 		FrequencyRequest request;
 		request.set_session_id(session_id);
 		request.set_frequency(frequency);
@@ -580,10 +785,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetFrequency(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setAmplitude(const std::string& session_id, double amplitude) {
+	StringResponse setAmplitude(const std::string& session_id, double amplitude) {
 		AmplitudeRequest request;
 		request.set_session_id(session_id);
 		request.set_amplitude(amplitude);
@@ -593,10 +806,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetAmplitude(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	std::string setNumberOfPeriods(const std::string& session_id, int32_t num_periods) {
+	StringResponse setNumberOfPeriods(const std::string& session_id, int32_t num_periods) {
 		PeriodsRequest request;
 		request.set_session_id(session_id);
 		request.set_num_periods(num_periods);
@@ -606,10 +827,18 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetNumberOfPeriods(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
-	ComplexNumber getImpedance(const std::string& session_id) {
+	ImpedanceResponse getImpedance(const std::string& session_id) {
 		ImpedanceRequest request;
 		request.set_session_id(session_id);
 
@@ -618,17 +847,57 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->GetImpedance(&context, request, &response);
+		// Returns results based on RPC status
 		if (status.ok()) {
-			return response.impedance();
+			return response;
 		}
-		else {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return ComplexNumber(); // Return a default object in case of failure
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
+	}
+
+	ImpedanceResponse getImpedancePad4Simple(const ImpedancePad4SimpleRequest request) {
+
+		ImpedanceResponse response;
+		grpc::ClientContext context;
+
+
+		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
+		grpc::Status status = stub_->GetImpedancePad4Simple(&context, request, &response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
 		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
+	}
+
+	ImpedanceResponse getImpedancePad4(const ImpedancePad4Request request) {
+
+		ImpedanceResponse response;
+		grpc::ClientContext context;
+
+
+		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
+		grpc::Status status = stub_->GetImpedancePad4(&context, request, &response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Get the potential value
-	double getPotential(const std::string& session_id) {
+	PotentialResponse getPotential(const std::string& session_id) {
 		SessionRequest request;
 		request.set_session_id(session_id);
 
@@ -637,17 +906,19 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->GetPotential(&context, request, &response);
+		// Returns results based on RPC status
 		if (status.ok()) {
-			return response.potential();
+			return response;
 		}
-		else {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return -1.0; // Return an error indicator
-		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Get the current value
-	double getCurrent(const std::string& session_id) {
+	CurrentResponse getCurrent(const std::string& session_id) {
 		SessionRequest request;
 		request.set_session_id(session_id);
 
@@ -656,17 +927,19 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->GetCurrent(&context, request, &response);
+		// Returns results based on RPC status
 		if (status.ok()) {
-			return response.current();
+			return response;
 		}
-		else {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return -1.0; // Return an error indicator
-		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 	// Sends a request to set the current value
-	std::string setCurrent(const std::string& session_id, double current) {
+	StringResponse setCurrent(const std::string& session_id, double current) {
 		SetCurrentRequest request;
 		request.set_session_id(session_id);
 		request.set_current(current);
@@ -676,252 +949,19 @@ public:
 
 		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
 		grpc::Status status = stub_->SetCurrent(&context, request, &response);
-		return handleResponse(status, response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
 	}
 
 
 private:
 	std::unique_ptr<ZahnerZennium::Stub> stub_;
-
-	std::string handleResponse(grpc::Status status, const StringResponse& response) {
-		if (status.ok()) {
-			return response.reply();
-		}
-		else {
-			std::cout << "gRPC Error: " << status.error_code() << " - " << status.error_message() << std::endl;
-			return "Operation Failed";
-		}
-	}
 };
 
-void RunClient() {
-	std::string target_address("localhost:50051");
-	ZahnerClient client(
-		grpc::CreateChannel(target_address, grpc::InsecureChannelCredentials()));
-
-	std::string session_id = "12345";
-	std::string host = "localhost";  // Example host
-	ConnectRequest::Mode mode = ConnectRequest::SCRIPT_REMOTE;  // Choose mode
-
-	std::string response = client.connectToTerm(session_id, host, mode);
-	std::cout << "Connection Response: " << response << std::endl;
-
-	// Attempt calibration
-	//std::string calibrationResponse = client.calibrateOffsets(session_id);
-	//std::cout << "Calibration Response: " << calibrationResponse << std::endl;
-
-
-	response = client.setPotentiostatMode(session_id, ModeRequest::PotentiostatMode::ModeRequest_PotentiostatMode_POTENTIOSTATIC);
-	std::cout << "setPotentiostatMode Response: " << response << std::endl;
-
-	response = client.setPotential(session_id, 1.0);
-	std::cout << "setPotential Response: " << response << std::endl;
-
-	response = client.enablePotentiostat(session_id, true);
-	std::cout << "enablePotentiostat Response: " << response << std::endl;
-
-	for (int i = 0; i < 5; i++) {
-		std::cout << "Potential: " << client.getPotential(session_id) << std::endl;
-		std::cout << "Current: " << client.getCurrent(session_id) << std::endl;
-	}
-
-	response = client.disablePotentiostat(session_id);
-	std::cout << "disablePotentiostat Response: " << response << std::endl;
-
-	response = client.setPotentiostatMode(session_id, ModeRequest::GALVANOSTATIC);
-	std::cout << "setPotentiostatMode Response: " << response << std::endl;
-
-	response = client.setCurrent(session_id, 20e-9);
-	std::cout << "setCurrent Response: " << response << std::endl;
-
-	response = client.enablePotentiostat(session_id, true);
-	std::cout << "enablePotentiostat Response: " << response << std::endl;
-
-	for (int i = 0; i < 5; i++) {
-		std::cout << "Potential: " << client.getPotential(session_id) << std::endl;
-		std::cout << "Current: " << client.getCurrent(session_id) << std::endl;
-	}
-
-	response = client.disablePotentiostat(session_id);
-	std::cout << "disablePotentiostat Response: " << response << std::endl;
-
-	response = client.setPotentiostatMode(session_id, ModeRequest::PotentiostatMode::ModeRequest_PotentiostatMode_POTENTIOSTATIC);
-	std::cout << "setPotentiostatMode Response: " << response << std::endl;
-
-	response = client.setPotential(session_id, 1.0);
-	std::cout << "setPotential Response: " << response << std::endl;
-
-	response = client.enablePotentiostat(session_id, true);
-	std::cout << "enablePotentiostat Response: " << response << std::endl;
-
-
-	response = client.setFrequency(session_id, 2000);
-	std::cout << "setFrequency Response: " << response << std::endl;
-
-	response = client.setAmplitude(session_id, 10e-3);
-	std::cout << "setAmplitude Response: " << response << std::endl;
-
-	response = client.setNumberOfPeriods(session_id, 3);
-	std::cout << "setNumberOfPeriods Response: " << response << std::endl;
-
-	ComplexNumber impedance = client.getImpedance(session_id);
-
-	std::cout << "real: " << impedance.real() << "double: " << impedance.imag() << std::endl;
-
-	response = client.disablePotentiostat(session_id);
-	std::cout << "disablePotentiostat: " << response << std::endl;
-
-	response = client.setAmplitude(session_id, 0);
-	std::cout << "setAmplitude Response: " << response << std::endl;
-
-	response = client.disconnectFromTerm(session_id);
-	std::cout << "disconnectFromTerm Response: " << response << std::endl;
-
-	std::cout << "finish" << std::endl;
-
-}
-
-void RunFileExchangeExample() {
-	std::string target_address("localhost:50051");
-	ZahnerClient client(grpc::CreateChannel(target_address, grpc::InsecureChannelCredentials()));
-	ThalesFileClient file_client(grpc::CreateChannel(target_address, grpc::InsecureChannelCredentials()));
-
-	std::string session_id = "12345";
-	std::string host = "localhost";  // Example host
-	ConnectRequest::Mode mode = ConnectRequest::SCRIPT_REMOTE;  // Choose mode
-
-	std::string response = client.connectToTerm(session_id, host, mode);
-	std::cout << "Connection Response: " << response << std::endl;
-
-	// Attempt calibration
-//std::string calibrationResponse = client.calibrateOffsets(session_id);
-//std::cout << "Calibration Response: " << calibrationResponse << std::endl;
-
-	response = file_client.connectToTerm(session_id, host);
-	std::cout << "Connection Response: " << response << std::endl;
-
-	/*
-	 * Measure EIS spectra with a sequential number in the file name that has been specified.
-	 * Starting with number 1.
-	 */
-
-	response = client.setEISNaming(session_id, SetEISNamingRequest_NamingRule_COUNTER);
-	std::cout << "SetEISNaming Response: " << response << std::endl;
-
-	response = client.setEISCounter(session_id, 1);
-	std::cout << "SetEISCounter Response: " << response << std::endl;
-
-	response = client.setEISOutputPath(session_id, "c:\\thales\\temp\\test1");
-	std::cout << "SetEISOutputPath Response: " << response << std::endl;
-
-	response = client.setEISOutputFileName(session_id, "spectra_cells");
-	std::cout << "SetEISOutputFileName Response: " << response << std::endl;
-
-	/*
-	 * Setting the parameters for the spectra.
-	 * Alternatively a rule file can be used as a template.
-	 */
-
-	response = client.setPotentiostatMode(session_id, ModeRequest::PotentiostatMode::ModeRequest_PotentiostatMode_POTENTIOSTATIC);
-	std::cout << "SetEISOutputFileName Response: " << response << std::endl;
-
-	response = client.setAmplitude(session_id, 50e-3);
-	std::cout << "setAmplitude Response: " << response << std::endl;
-
-	response = client.setPotential(session_id, 0);
-	std::cout << "setPotential Response: " << response << std::endl;
-
-	response = client.setLowerFrequencyLimit(session_id, 500);
-	std::cout << "setLowerFrequencyLimit Response: " << response << std::endl;
-
-	response = client.setStartFrequency(session_id, 1000);
-	std::cout << "setStartFrequency Response: " << response << std::endl;
-
-	response = client.setUpperFrequencyLimit(session_id, 2000);
-	std::cout << "setUpperFrequencyLimit Response: " << response << std::endl;
-
-	response = client.setLowerNumberOfPeriods(session_id, 3);
-	std::cout << "setLowerNumberOfPeriods Response: " << response << std::endl;
-
-	response = client.setLowerStepsPerDecade(session_id, 5);
-	std::cout << "setLowerStepsPerDecade Response: " << response << std::endl;
-
-	response = client.setUpperNumberOfPeriods(session_id, 20);
-	std::cout << "setUpperNumberOfPeriodsResponse: " << response << std::endl;
-
-	response = client.setUpperStepsPerDecade(session_id, 5);
-	std::cout << "setUpperStepsPerDecade Response: " << response << std::endl;
-
-	response = client.setScanDirection(session_id, SetScanDirectionRequest::START_TO_MAX);
-	std::cout << "setScanDirection Response: " << response << std::endl;
-
-	response = client.setScanStrategy(session_id, SetScanStrategyRequest::SINGLE_SINE);
-	std::cout << "setScanStrategy Response: " << response << std::endl;
-
-	/*
-	* Setup PAD4 Channels.
-	* The PAD4 setup is encapsulated with try and catch to catch the exception if no PAD4 card is present.
-	*/
-
-	response = client.setupPad4ChannelWithVoltageRange(session_id, 1, 1, true, 4.0);
-	std::cout << "setupPad4ChannelWithVoltageRange Response: " << response << std::endl;
-	response = client.setupPad4ChannelWithVoltageRange(session_id, 1, 2, true, 4.0);
-	std::cout << "setupPad4ChannelWithVoltageRange Response: " << response << std::endl;
-	response = client.setupPad4ModeGlobal(session_id, SetupPad4ModeGlobalRequest::VOLTAGE);
-	std::cout << "setupPad4ModeGlobal Response: " << response << std::endl;
-	response = client.enablePad4Global(session_id, true);
-	std::cout << "enablePad4Global Response: " << response << std::endl;
-
-	/*
-	* Switching on the potentiostat before the measurement,
-	* so that EIS is measured at the set DC potential.
-	* If the potentiostat is off before the measurement,
-	* the measurement is performed at the OCP.
-	*/
-
-	response = client.enablePotentiostat(session_id, true);
-	std::cout << "enablePotentiostat Response: " << response << std::endl;
-
-	response = client.measureEIS(session_id);
-	std::cout << "measureEIS Response: " << response << std::endl;
-
-	FileObject file_obj = file_client.acquireFile(session_id, R"(C:\THALES\temp\test1\spectra_cells_0002_ser01.ism)");
-	std::cout << "acquireFile Response: " << response << std::endl;
-
-	response = file_client.enableKeepReceivedFilesInObject(session_id);
-	std::cout << "enableKeepReceivedFilesInObject Response: " << response << std::endl;
-
-	response = file_client.enableAutomaticFileExchange(session_id, true, "");
-	std::cout << "enableAutomaticFileExchange Response: " << response << std::endl;
-
-	response = client.measureEIS(session_id);
-	std::cout << "measureEIS Response: " << response << std::endl;
-
-	response = client.disablePotentiostat(session_id);
-	std::cout << "disablePotentiostat Response: " << response << std::endl;
-
-	response = client.disconnectFromTerm(session_id);
-	std::cout << "disconnectFromTerm Response: " << response << std::endl;
-
-	response = file_client.disableAutomaticFileExchange(session_id);
-	std::cout << "disableAutomaticFileExchange Response: " << response << std::endl;
-
-	std::cout << "Received Files: " << file_client.getReceivedFiles(session_id).size() << std::endl;
-
-	response = file_client.deleteReceivedFiles(session_id);
-	std::cout << "deleteReceivedFiles Response: " << response << std::endl;
-
-	response = file_client.disconnectFromTerm(session_id);
-	std::cout << "disconnectFromTerm Response: " << response << std::endl;
-}
-
-int main() {
-	std::cout << "Starting Zahner Client...\n";
-	RunClient();
-	RunFileExchangeExample();
-
-	std::cout << "Press any key to exit...";
-	std::cin.get();  // Waits for a key press
-
-	return 0;
-}

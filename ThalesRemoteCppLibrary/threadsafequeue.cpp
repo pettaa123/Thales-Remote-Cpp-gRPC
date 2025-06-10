@@ -24,6 +24,7 @@
  * THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "threadsafequeue.h"
+#include <chrono>
 
 ThreadsafeQueue::ThreadsafeQueue()
 {

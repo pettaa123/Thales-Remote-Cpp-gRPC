@@ -26,6 +26,7 @@
 
 #include "thalesremoteconnection.h"
 #include "termconnectionerror.h"
+#include <chrono>
 
 ZenniumConnection::ZenniumConnection() :
 

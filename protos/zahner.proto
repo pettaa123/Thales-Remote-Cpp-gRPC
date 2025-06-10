@@ -21,6 +21,8 @@ service ZahnerZennium {
     rpc EnablePotentiostat (EnablePotentiostatRequest) returns (StringResponse);
     rpc DisablePotentiostat (SessionRequest) returns (StringResponse);
     rpc GetImpedance (ImpedanceRequest) returns (ImpedanceResponse);
+    rpc GetImpedancePad4Simple (ImpedancePad4SimpleRequest) returns (ImpedanceResponse); 
+    rpc GetImpedancePad4 (ImpedancePad4Request) returns (ImpedanceResponse); 
     rpc SetEISNaming (SetEISNamingRequest) returns (StringResponse);
     rpc SetEISCounter (SetEISCounterRequest) returns (StringResponse);
     rpc SetEISOutputPath (SetEISOutputPathRequest) returns (StringResponse);
@@ -106,6 +108,18 @@ message ImpedanceRequest {
     string session_id = 1;
 }
 
+message ImpedancePad4SimpleRequest {
+    string session_id = 1;
+    double frequency = 2;
+}
+
+message ImpedancePad4Request {
+    string session_id = 1;
+    double frequency = 2;
+    double amplitude = 3;
+    int32 num_periods = 4;
+}
+
 message SetEISCounterRequest {
     string session_id = 1;
     int32 number = 2;
@@ -162,7 +176,7 @@ message FileServiceConnectRequest {
 }
 
 message FileServiceConnectResponse {
-    bool success = 1;
+    int32 status = 1;
     string message = 2;
     string session_id = 3;
 }
@@ -210,13 +224,13 @@ message DisableKeepReceivedFilesInObjectRequest {
 }
 
 message FileObjectResponse {
-    bool success = 1;
+    int32 status = 1;
     string message = 2;
     FileObject file = 3;
 }
 
 message FileObjectsResponse {
-    bool success = 1;
+    int32 status = 1;
     string message = 2;
     repeated FileObject files = 3;
 }
@@ -308,36 +322,37 @@ message ConnectRequest {
 }
 
 message ConnectResponse {
-    bool success = 1;
+    int32 status = 1;
     string message = 2;
     string session_id = 3;
 }
 
 message DisconnectResponse {
-    bool success = 1;
+    int32 status = 1;
     string message = 2;
 }
 
 message PotentialResponse {
-    bool success = 1;
+    int32 status = 1;
     string message = 2;
     double potential = 3;
 }
 
 message CurrentResponse {
-    bool success = 1;
+    int32 status = 1;
     string message = 2;
     double current = 3;
 }
 
 message ImpedanceResponse {
-    bool success = 1;
+    int32 status = 1;
     string message = 2;
     ComplexNumber impedance = 3;
+    string timestamp = 4;
 }
 
 message StringResponse {
-    bool success = 1;
+    int32 status = 1;
     string message = 2;
     string reply = 3;
 }

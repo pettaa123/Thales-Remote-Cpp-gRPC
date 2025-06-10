@@ -66,13 +66,9 @@ namespace thalesfile {
         grpc::Status ConnectToTerm(grpc::ServerContext* context, const FileServiceConnectRequest* request, FileServiceConnectResponse* response) override {
             auto connection = connectionManager_.createConnection(request->session_id(), request->host());
             if (!connection) {
-                response->set_success(false);
-                response->set_message("Failed to connect.");
                 return grpc::Status(grpc::StatusCode::INTERNAL, "Failed to establish connection.");
             }
 
-            response->set_success(true);
-            response->set_message("Connected successfully.");
             response->set_session_id(request->session_id());
 
             return grpc::Status::OK;
@@ -80,22 +76,17 @@ namespace thalesfile {
 
         grpc::Status DisconnectFromTerm(grpc::ServerContext* context, const SessionRequest* request, DisconnectResponse* response) override {
             connectionManager_.removeSession(request->session_id());
-            response->set_success(true);
-            response->set_message("Disconnected successfully.");
             return grpc::Status::OK;
         }
 
         grpc::Status AcquireFile(grpc::ServerContext* context, const AcquireFileRequest* request, FileObjectResponse* response) override {
             auto connection = connectionManager_.getConnection(request->session_id());
             if (!connection) {
-                response->set_success(false);
-                response->set_message("Failed to retrieve ThalesFileInterface instance.");
-                return grpc::Status(grpc::StatusCode::NOT_FOUND, response->message());
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
             }
 
             try {
                 ThalesFileInterface::FileObject reply = connection->acquireFile(request->filename());
-                response->set_success(true);
 
                 // Dynamically allocate FileObject
                 zahner::FileObject* z_FileObject = new zahner::FileObject();
@@ -105,12 +96,9 @@ namespace thalesfile {
 
                 // Pass ownership to response
                 response->set_allocated_file(z_FileObject);
-                response->set_message("AcquireFile completed successfully.");
             }
             catch (const std::exception& e) {
-                response->set_success(false);
-                response->set_message(std::string("AcquireFile failed: ") + e.what());
-                return grpc::Status(grpc::StatusCode::INTERNAL, response->message());
+                return grpc::Status(grpc::StatusCode::INTERNAL, std::string("AcquireFile failed: ") + e.what());
             }
 
             return grpc::Status::OK;
@@ -119,20 +107,14 @@ namespace thalesfile {
         grpc::Status EnableSaveReceivedFilesToDisk(grpc::ServerContext* context, const EnableSaveReceivedFilesToDiskRequest* request, StringResponse* response) override {
             auto connection = connectionManager_.getConnection(request->session_id());
             if (!connection) {
-                response->set_success(false);
-                response->set_message("Failed to retrieve ThalesFileInterface instance.");
-                return grpc::Status(grpc::StatusCode::NOT_FOUND, response->message());
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
             }
 
             try {
                 connection->enableSaveReceivedFilesToDisk(request->path(),request->enable());
-                response->set_success(true);
-                response->set_message("EnableSaveReceivedFilesToDisk completed successfully.");
             }
             catch (const std::exception& e) {
-                response->set_success(false);
-                response->set_message(std::string("EnableSaveReceivedFilesToDisk failed: ") + e.what());
-                return grpc::Status(grpc::StatusCode::INTERNAL, response->message());
+                return grpc::Status(grpc::StatusCode::INTERNAL, std::string("EnableSaveReceivedFilesToDisk failed: ") + e.what());
             }
 
             return grpc::Status::OK;
@@ -141,20 +123,15 @@ namespace thalesfile {
         grpc::Status EnableKeepReceivedFilesInObject(grpc::ServerContext* context, const SessionRequest* request, StringResponse* response) override {
             auto connection = connectionManager_.getConnection(request->session_id());
             if (!connection) {
-                response->set_success(false);
-                response->set_message("Failed to retrieve ThalesFileInterface instance.");
-                return grpc::Status(grpc::StatusCode::NOT_FOUND, response->message());
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
             }
 
             try {
                 connection->enableKeepReceivedFilesInObject();
-                response->set_success(true);
                 response->set_message("EnableKeepReceivedFilesInObject completed successfully.");
             }
             catch (const std::exception& e) {
-                response->set_success(false);
-                response->set_message(std::string("EnableKeepReceivedFilesInObject failed: ") + e.what());
-                return grpc::Status(grpc::StatusCode::INTERNAL, response->message());
+                return grpc::Status(grpc::StatusCode::INTERNAL, std::string("EnableKeepReceivedFilesInObject failed: ") + e.what());
             }
 
             return grpc::Status::OK;
@@ -163,20 +140,14 @@ namespace thalesfile {
         grpc::Status EnableAutomaticFileExchange(grpc::ServerContext* context, const EnableAutomaticFileExchangeRequest* request, StringResponse* response) override {
             auto connection = connectionManager_.getConnection(request->session_id());
             if (!connection) {
-                response->set_success(false);
-                response->set_message("Failed to retrieve ThalesFileInterface instance.");
-                return grpc::Status(grpc::StatusCode::NOT_FOUND, response->message());
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
             }
 
             try {
-                connection->enableAutomaticFileExchange();
-                response->set_success(true);
-                response->set_message("EnableAutomaticFileExchange completed successfully.");
+                response->set_reply(connection->enableAutomaticFileExchange());
             }
             catch (const std::exception& e) {
-                response->set_success(false);
-                response->set_message(std::string("enableAutomaticFileExchange failed: ") + e.what());
-                return grpc::Status(grpc::StatusCode::INTERNAL, response->message());
+                return grpc::Status(grpc::StatusCode::INTERNAL, std::string("enableAutomaticFileExchange failed: ") + e.what());
             }
 
             return grpc::Status::OK;
@@ -185,20 +156,15 @@ namespace thalesfile {
         grpc::Status DisableAutomaticFileExchange(grpc::ServerContext* context, const SessionRequest* request, StringResponse* response) override {
             auto connection = connectionManager_.getConnection(request->session_id());
             if (!connection) {
-                response->set_success(false);
-                response->set_message("Failed to retrieve ThalesFileInterface instance.");
-                return grpc::Status(grpc::StatusCode::NOT_FOUND, response->message());
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
             }
 
             try {
                 connection->disableAutomaticFileExchange();
-                response->set_success(true);
-                response->set_message("DisableAutomaticFileExchange completed successfully.");
+                response->set_reply(connection->disableAutomaticFileExchange());
             }
             catch (const std::exception& e) {
-                response->set_success(false);
-                response->set_message(std::string("DisableAutomaticFileExchange failed: ") + e.what());
-                return grpc::Status(grpc::StatusCode::INTERNAL, response->message());
+                return grpc::Status(grpc::StatusCode::INTERNAL, std::string("DisableAutomaticFileExchange failed: ") + e.what());
             }
 
             return grpc::Status::OK;
@@ -207,20 +173,14 @@ namespace thalesfile {
         grpc::Status DeleteReceivedFiles(grpc::ServerContext* context, const SessionRequest* request, StringResponse* response) override {
             auto connection = connectionManager_.getConnection(request->session_id());
             if (!connection) {
-                response->set_success(false);
-                response->set_message("Failed to retrieve ThalesFileInterface instance.");
-                return grpc::Status(grpc::StatusCode::NOT_FOUND, response->message());
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
             }
 
             try {
                 connection->deleteReceivedFiles();
-                response->set_success(true);
-                response->set_message("DeleteReceivedFiles completed successfully.");
             }
             catch (const std::exception& e) {
-                response->set_success(false);
-                response->set_message(std::string("DeleteReceivedFiles failed: ") + e.what());
-                return grpc::Status(grpc::StatusCode::INTERNAL, response->message());
+                return grpc::Status(grpc::StatusCode::INTERNAL, std::string("DeleteReceivedFiles failed: ") + e.what());
             }
 
             return grpc::Status::OK;
@@ -229,16 +189,12 @@ namespace thalesfile {
         grpc::Status GetReceivedFiles(grpc::ServerContext* context, const SessionRequest* request, FileObjectsResponse* response) override {
             auto connection = connectionManager_.getConnection(request->session_id());
             if (!connection) {
-                response->set_success(false);
-                response->set_message("Failed to retrieve ThalesFileInterface instance.");
-                return grpc::Status(grpc::StatusCode::NOT_FOUND, response->message());
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
             }
 
             try {
                 const std::vector<ThalesFileInterface::FileObject>& reply = connection->getReceivedFiles();
 
-                response->set_success(true);
-                response->set_message("GetReceivedFiles completed successfully.");
                 // Populate response->files with received files
                 for (const auto& file : reply) {
                     zahner::FileObject* z_FileObject = response->add_files();
@@ -248,9 +204,7 @@ namespace thalesfile {
                 }
             }
             catch (const std::exception& e) {
-                response->set_success(false);
-                response->set_message(std::string("GetReceivedFiles failed: ") + e.what());
-                return grpc::Status(grpc::StatusCode::INTERNAL, response->message());
+                return grpc::Status(grpc::StatusCode::INTERNAL, std::string("GetReceivedFiles failed: ") + e.what());
             }
 
             return grpc::Status::OK;

@@ -34,6 +34,8 @@
 
 **/out/
 out/
+**/x64/debug/
+**/x64/release/
 
 # Visual Studio files
 **/.vs/
@@ -41,7 +43,9 @@ out/
 *.suo
 *.user
 *.ipch
-
+*.tlog
+*.idb
+*.log
 
 # Build artifacts
 *.ilk

@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Thales-Remote-gRPC-Server.cpp">
+    <ClCompile Include="thales-remote-grpc-server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Thales-Remote-Cpp-gRPC-cMake\out\build\x64-debug\generated\zahner.grpc.pb.cc">
