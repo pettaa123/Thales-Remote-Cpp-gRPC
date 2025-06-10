@@ -44,6 +44,7 @@ service ZahnerZennium {
     rpc DisablePad4Global (DisablePad4GlobalRequest) returns (StringResponse);
     rpc ReadPad4Setup (SessionRequest) returns (StringResponse);
     rpc MeasureEIS (SessionRequest) returns (StringResponse);
+    rpc SelectPotentiostat (SelectPotentiostatRequest) returns (StringResponse);
 }
 
 service ThalesFile {
@@ -62,6 +63,11 @@ service ThalesFile {
     rpc GetLatestReceivedFile (SessionRequest) returns (FileObjectResponse);
     rpc SaveReceivedFile (SaveReceivedFileRequest) returns (StringResponse);
     rpc DeleteReceivedFiles (SessionRequest) returns (StringResponse);
+}
+
+message SelectPotentiostatRequest {
+    string session_id = 1;
+    int32 device = 2;
 }
 
 message SetPotentialRequest {

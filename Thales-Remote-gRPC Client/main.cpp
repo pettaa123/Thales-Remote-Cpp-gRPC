@@ -55,31 +55,45 @@ void RunSingleFrequencyImpedanceMeasurement(){
 	* Alternatively a rule file can be used as a template.
 	*/
 
-	response = client.setPotentiostatMode(session_id, ModeRequest::PotentiostatMode::ModeRequest_PotentiostatMode_POTENTIOSTATIC);
+	response = client.selectPotentiostat(session_id, 1);
+	if (response.status()) {
+		std::cout << "selectPotentiostat Status: " << response.status() << std::endl;
+		std::cout << "selectPotentiostat Message: " << response.message() << std::endl;
+	}
+
+	response = client.setPotentiostatMode(session_id, ModeRequest::PotentiostatMode::ModeRequest_PotentiostatMode_GALVANOSTATIC);
 	if (response.status()) {
 		std::cout << "setPotentiostatMode Status: " << response.status() << std::endl;
 		std::cout << "setPotentiostatMode Message: " << response.message() << std::endl;
 	}
 
-	response = client.setAmplitude(session_id, 50e-3);
+	response = client.setAmplitude(session_id, 1.0);
 	if (response.status()) {
 		std::cout << "setAmplitude Status: " << response.status() << std::endl;
 		std::cout << "setAmplitude Message: " << response.message() << std::endl;
 	}
 
-	response = client.setPotential(session_id, 0.0);
+	response = client.setCurrent(session_id, 2.0);
 	if (response.status()) {
 		std::cout << "setPotential Status: " << response.status() << std::endl;
 		std::cout << "setPotential Message: " << response.message() << std::endl;
 	}
 
 	SetScanStrategyRequest sssRequest;
+	sssRequest.set_session_id(session_id);
 	sssRequest.set_strategy(SetScanStrategyRequest_ScanStrategy_SINGLE_SINE);
 
 	response = client.setScanStrategy(sssRequest);
 	if (response.status()) {
 		std::cout << "setScanStrategy Status: " << response.status() << std::endl;
 		std::cout << "setScanStrategy Message: " << response.message() << std::endl;
+	}
+
+
+	response = client.setNumberOfPeriods(session_id, 10);
+	if (response.status()) {
+		std::cout << "setNumberOfPeriods Status: " << response.status() << std::endl;
+		std::cout << "setNumberOfPeriods Message: " << response.message() << std::endl;
 	}
 
 	/*
@@ -100,6 +114,7 @@ void RunSingleFrequencyImpedanceMeasurement(){
 		if (potResponse.status()) {
 			std::cout << "getPotential Status: " << response.status() << std::endl;
 			std::cout << "getPotential Message: " << response.message() << std::endl;
+			break;
 		}
 		std::cout << potResponse.potential() << std::endl;
 
@@ -107,26 +122,46 @@ void RunSingleFrequencyImpedanceMeasurement(){
 		if (curResponse.status()) {
 			std::cout << "getCurrent Status: " << curResponse.status() << std::endl;
 			std::cout << "getCurrent Message: " << curResponse.message() << std::endl;
+			break;
 		}
 		std::cout << curResponse.current() << std::endl;
 	}
 
 	ImpedanceResponse impResponse;
-
 	ImpedancePad4SimpleRequest impRequest;
 	impRequest.set_session_id(session_id);
 	impRequest.set_frequency(1000);
 
-	for (size_t i = 0; i < 100; i++)
+	for (size_t i = 0; i < 10; i++)
 	{
 		impResponse = client.getImpedancePad4Simple(impRequest);
 		if (impResponse.status()) {
 			std::cout << "getImpedancePad4 Status: " << impResponse.status() << std::endl;
 			std::cout << "getImpedancePad4 Message: " << impResponse.message() << std::endl;
+			break;
 		}
+		std::cout << "getImpedancePad4 real: " << impResponse.impedance().real() << std::endl;
+		std::cout << "getImpedancePad4 imag: " << impResponse.impedance().imag() << std::endl;
 	}
 
+	response = client.setAmplitude(session_id, 0.0);
+	if (response.status()) {
+		std::cout << "setAmplitude Status: " << response.status() << std::endl;
+		std::cout << "setAmplitude Message: " << response.message() << std::endl;
+	}
+	response = client.disablePotentiostat(session_id);
 
+	if (response.status()) {
+		std::cout << "disablePotentiostat Status: " << response.status() << std::endl;
+		std::cout << "disablePotentiostat Message: " << response.message() << std::endl;
+	}
+
+	DisconnectResponse discResponse = client.disconnectFromTerm(session_id);
+
+	if (response.status()) {
+		std::cout << "disconnectResponse Status: " << response.status() << std::endl;
+		std::cout << "disconnectResponse Message: " << response.message() << std::endl;
+	}
 }
 
 void RunClient() {

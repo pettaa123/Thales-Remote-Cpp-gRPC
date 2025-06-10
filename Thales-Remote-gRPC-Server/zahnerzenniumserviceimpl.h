@@ -64,6 +64,42 @@ public:
 		return grpc::Status::OK;
 	}
 
+	grpc::Status SetEISNaming(grpc::ServerContext* context, const ::zahner::SetEISNamingRequest* request, StringResponse* response) override {
+		auto wrapper = connectionManager_.getWrapper(request->session_id());
+		if (!wrapper) {
+			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
+		}
+
+		try {
+			std::string reply = wrapper->setEISNaming((NamingRule)request->naming());
+
+			response->set_reply(reply);
+		}
+		catch (const std::exception& e) {
+			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetEISNamingRule failed: ") + e.what());
+		}
+
+		return grpc::Status::OK;
+	}
+
+	grpc::Status SetEISCounter(grpc::ServerContext* context, const ::zahner::SetEISCounterRequest* request, StringResponse* response) override {
+		auto wrapper = connectionManager_.getWrapper(request->session_id());
+		if (!wrapper) {
+			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
+		}
+
+		try {
+			std::string reply = wrapper->setEISCounter(request->number());
+
+			response->set_reply(reply);
+		}
+		catch (const std::exception& e) {
+			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetEISCounter failed: ") + e.what());
+		}
+
+		return grpc::Status::OK;
+	}
+
 	grpc::Status SetEISOutputFileName(grpc::ServerContext* context, const ::zahner::SetEISOutputFileNameRequest* request, StringResponse* response) override {
 		auto wrapper = connectionManager_.getWrapper(request->session_id());
 		if (!wrapper) {
@@ -210,12 +246,12 @@ public:
 	grpc::Status SetScanStrategy(grpc::ServerContext* context, const ::zahner::SetScanStrategyRequest* request, StringResponse* response) override {
 		auto wrapper = connectionManager_.getWrapper(request->session_id());
 		if (!wrapper) {
+			std::cout << "Failed to retrieve ThalesRemoteScriptWrapper instance." << std::endl;
 			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
 		}
 
 		try {
 			std::string reply = wrapper->setScanStrategy((ScanStrategy)request->strategy());
-			
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
@@ -305,11 +341,12 @@ public:
 		try {
 			std::string reply = wrapper->getImpedancePad4(request->frequency());
 			std::string timestamp = getISOCurrentTimestamp();
-			std::complex<double> impedance; stringToComplex(reply);
-			auto response_impedance = std::make_unique<ComplexNumber>();
+			std::cout << timestamp << " : " << reply;
+			std::complex<double> impedance = stringToComplex(reply);
+			auto response_impedance = new ComplexNumber();
 			response_impedance->set_real(impedance.real());
 			response_impedance->set_imag(impedance.imag());
-			response->set_allocated_impedance(response_impedance.release());
+			response->set_allocated_impedance(response_impedance);
 			response->set_timestamp(timestamp);
 		}
 		catch (const ThalesRemoteError error) {
@@ -466,6 +503,24 @@ public:
 		return grpc::Status::OK;
 	}
 
+	// Set the potentiostat device
+	grpc::Status SelectPotentiostat(grpc::ServerContext* context, const SelectPotentiostatRequest* request, StringResponse* response) override {
+		auto wrapper = connectionManager_.getWrapper(request->session_id());
+		if (!wrapper) {
+			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
+		}
+
+		try {
+			std::string reply = wrapper->selectPotentiostat(request->device());
+			response->set_reply(reply);
+		}
+		catch (const std::exception& e) {
+			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to set potentiostat device: ") + e.what());
+		}
+
+		return grpc::Status::OK;
+	}
+
 	// Set the frequency
 	grpc::Status SetFrequency(grpc::ServerContext* context, const FrequencyRequest* request, StringResponse* response) override {
 		auto wrapper = connectionManager_.getWrapper(request->session_id());
@@ -497,6 +552,24 @@ public:
 		}
 		catch (const std::exception& e) {
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to set amplitude: ") + e.what());
+		}
+
+		return grpc::Status::OK;
+	}
+
+	// Set the current
+	grpc::Status SetCurrent(grpc::ServerContext* context, const SetCurrentRequest* request, StringResponse* response) override {
+		auto wrapper = connectionManager_.getWrapper(request->session_id());
+		if (!wrapper) {
+			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
+		}
+
+		try {
+			std::string reply = wrapper->setCurrent(request->current());
+			response->set_reply(reply);
+		}
+		catch (const std::exception& e) {
+			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to set current: ") + e.what());
 		}
 
 		return grpc::Status::OK;
@@ -550,12 +623,15 @@ private:
 	//converts string in the form of "3.5-2.1i"  to complex<double>;
 	std::complex<double> stringToComplex(const std::string& str) {
 		double real = 0, imag = 0;
-		char op = '+', suffix = 'i';
+		std::string label;
 
 		std::istringstream iss(str);
-		iss >> real >> op >> imag >> suffix;
 
-		if (op == '-') imag = -imag; // Handle negative imaginary part
+		// Extract label and values
+		std::getline(iss, label, '=');
+		iss >> real;
+		iss.ignore(); // Ignore the comma
+		iss >> imag;
 
 		return std::complex<double>(real, imag);
 	}

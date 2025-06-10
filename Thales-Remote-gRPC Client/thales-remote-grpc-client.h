@@ -938,6 +938,28 @@ public:
 		return response;
 	}
 
+	// Sends a request to set the current device
+	StringResponse selectPotentiostat(const std::string& session_id, int device) {
+		SelectPotentiostatRequest request;
+		request.set_session_id(session_id);
+		request.set_device(device);
+
+		StringResponse response;
+		grpc::ClientContext context;
+
+		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(10000));  // 10-second timeout
+		grpc::Status status = stub_->SelectPotentiostat(&context, request, &response);
+		// Returns results based on RPC status
+		if (status.ok()) {
+			return response;
+		}
+
+		response.set_status(status.error_code());
+		response.set_message(status.error_message());
+
+		return response;
+	}
+
 	// Sends a request to set the current value
 	StringResponse setCurrent(const std::string& session_id, double current) {
 		SetCurrentRequest request;
