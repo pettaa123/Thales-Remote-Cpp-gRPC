@@ -24,7 +24,7 @@ namespace thalesfile {
                     auto connection = std::make_shared<ThalesFileInterface>(host);
                     sessions_[session_id] = connection;
                 }
-                catch (ThalesRemoteError error) {
+                catch (const std::exception& e) {
                     return nullptr; // Connection failed
                 }
             }

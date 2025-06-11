@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 
 #include "connection_manager.h"
@@ -279,6 +279,36 @@ public:
 		return grpc::Status::OK;
 	}
 
+	grpc::Status SetupPad4Channel(grpc::ServerContext* context, const ::zahner::SetupPad4ChannelRequest* request, StringResponse* response) override {
+		auto wrapper = connectionManager_.getWrapper(request->session_id());
+		if (!wrapper) {
+			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
+		}
+
+		try {
+			std::string reply = wrapper->setupPad4Channel(request->card(), request->channel(), request->enabled());
+			response->set_reply(reply);
+		}
+		catch (const ThalesRemoteError& error) {
+			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetupPad4Channel failed: ") + error.getMessage());
+		}
+
+		return grpc::Status::OK;
+	}
+	/** Setting a single channel of a PAD4 card for an EIS measurement.
+	*
+	*  Each channel of the Pad4 card must be configured separately and then the PAD4 must be activated with
+	* ThalesRemoteScriptWrapper::enablePAD4. Each channel can be given a different voltage range or shunt. The user can
+	* switch the type of PAD4 channels between voltage sense (standard configuration) and current sense (with
+	* additional shunt resistor).
+	*
+	* \param  card The number of the card starting at 1 and up to 4.
+	* \param  channel The channel of the card starting at 1 and up to 4.
+	* \param  enabled True to enable the channel.
+	* \param  voltageRange input voltage range, if this differs from 4 V
+	*
+	* \return The response string from the device.
+	*/
 	grpc::Status SetupPad4ChannelWithVoltageRange(grpc::ServerContext* context, const ::zahner::SetupPad4ChannelWithVoltageRangeRequest* request, StringResponse* response) override {
 		auto wrapper = connectionManager_.getWrapper(request->session_id());
 		if (!wrapper) {
@@ -286,11 +316,10 @@ public:
 		}
 
 		try {
-			std::string reply = wrapper->setupPad4ChannelWithVoltageRange(request->card(),request->channel(),request->enabled(),request->voltage_range());
-			
+			std::string reply = wrapper->setupPad4ChannelWithVoltageRange(request->card(), request->channel(), request->enabled(),request->voltage_range());
 			response->set_reply(reply);
 		}
-		catch (const ThalesRemoteError error) {
+		catch (const ThalesRemoteError& error) {
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetupPad4ChannelWithVoltageRange failed: ") + error.getMessage());
 		}
 
@@ -308,7 +337,7 @@ public:
 			
 			response->set_reply(reply);
 		}
-		catch (const ThalesRemoteError error) {
+		catch (const ThalesRemoteError& error) {
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetupPad4ModeGlobal failed: ") + error.getMessage());
 		}
 
@@ -325,7 +354,7 @@ public:
 			std::string reply = wrapper->enablePad4Global(request->enabled());			
 			response->set_reply(reply);
 		}
-		catch (const ThalesRemoteError error) {
+		catch (const ThalesRemoteError& error) {
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("EnablePad4Global failed: ") + error.getMessage());
 		}
 
@@ -349,8 +378,8 @@ public:
 			response->set_allocated_impedance(response_impedance);
 			response->set_timestamp(timestamp);
 		}
-		catch (const ThalesRemoteError error) {
-			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("GetImpedancePad4Simple failed: ") + error.getMessage());
+		catch (const std::exception& e) {
+			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("GetImpedancePad4Simple failed: ") + e.what());
 		}
 
 		return grpc::Status::OK;
@@ -372,8 +401,8 @@ public:
 			response->set_allocated_impedance(response_impedance.release());
 			response->set_timestamp(timestamp);
 		}
-		catch (const ThalesRemoteError error) {
-			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("GetImpedancePad4 failed: ") + error.getMessage());
+		catch (const std::exception& e) {
+			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("GetImpedancePad4 failed: ") + e.what());
 		}
 
 		return grpc::Status::OK;
@@ -540,6 +569,8 @@ public:
 	}
 
 	// Set the amplitude
+	//Ampl = 5: Set AC amplitude to 5 mV in potentiostatic mode
+	//	or 5 mA in galvanostatic mode
 	grpc::Status SetAmplitude(grpc::ServerContext* context, const AmplitudeRequest* request, StringResponse* response) override {
 		auto wrapper = connectionManager_.getWrapper(request->session_id());
 		if (!wrapper) {

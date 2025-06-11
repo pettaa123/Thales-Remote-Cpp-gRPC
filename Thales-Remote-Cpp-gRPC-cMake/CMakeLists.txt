@@ -16,12 +16,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 
-set(ZLIB_LIBRARY "D:/vcpkg/installed/x64-windows/lib/zlib.lib")
-set(ZLIB_INCLUDE_DIR "D:/vcpkg/installed/x64-windows/include")
+#set(ZLIB_LIBRARY "D:/vcpkg/installed/x64-windows/lib/zlib.lib")
+#set(ZLIB_INCLUDE_DIR "D:/vcpkg/installed/x64-windows/include")
 
-set(OPENSSL_ROOT_DIR "D:/vcpkg/installed/x64-windows")
-set(OPENSSL_INCLUDE_DIR "D:/vcpkg/installed/x64-windows/include")
-find_package(OpenSSL CONFIG REQUIRED)
+#set(OPENSSL_ROOT_DIR "D:/vcpkg/installed/x64-windows")
+#set(OPENSSL_INCLUDE_DIR "D:/vcpkg/installed/x64-windows/include")
+find_package(OpenSSL REQUIRED)
 
 find_package(ZLIB REQUIRED)
 

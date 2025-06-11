@@ -66,7 +66,7 @@ void RunSingleFrequencyImpedanceMeasurement(){
 		std::cout << "setPotentiostatMode Status: " << response.status() << std::endl;
 		std::cout << "setPotentiostatMode Message: " << response.message() << std::endl;
 	}
-
+	//In der Thales - Software wird die Amplitude mit Milli - Präfix(mA oder mV) angegeben
 	response = client.setAmplitude(session_id, 1.0);
 	if (response.status()) {
 		std::cout << "setAmplitude Status: " << response.status() << std::endl;
@@ -90,10 +90,43 @@ void RunSingleFrequencyImpedanceMeasurement(){
 	}
 
 
-	response = client.setNumberOfPeriods(session_id, 10);
+	response = client.setNumberOfPeriods(session_id, 1);
 	if (response.status()) {
 		std::cout << "setNumberOfPeriods Status: " << response.status() << std::endl;
 		std::cout << "setNumberOfPeriods Message: " << response.message() << std::endl;
+		std::cout << "setNumberOfPeriods Reply: " << response.reply() << std::endl;
+	}
+
+	/*
+	 * Setup PAD4 Channels.
+	 */
+
+	response = client.setupPad4ChannelWithVoltageRange(session_id, 1,1,true,4.0);
+	if (response.status()) {
+		std::cout << "setupPad4ChannelWithVoltageRange Status: " << response.status() << std::endl;
+		std::cout << "setupPad4ChannelWithVoltageRange Message: " << response.message() << std::endl;
+		std::cout << "setupPad4ChannelWithVoltageRange Reply: " << response.reply() << std::endl;
+	}
+
+	response = client.setupPad4ChannelWithVoltageRange(session_id, 1, 2, true, 4.0);
+	if (response.status()) {
+		std::cout << "setupPad4ChannelWithVoltageRange Status: " << response.status() << std::endl;
+		std::cout << "setupPad4ChannelWithVoltageRange Message: " << response.message() << std::endl;
+		std::cout << "setupPad4ChannelWithVoltageRange Reply: " << response.reply() << std::endl;
+	}
+
+	response = client.setupPad4ModeGlobal(session_id,SetupPad4ModeGlobalRequest_Pad4Mode_VOLTAGE);
+	if (response.status()) {
+		std::cout << "setupPad4ModeGlobal Status: " << response.status() << std::endl;
+		std::cout << "setupPad4ModeGlobal Message: " << response.message() << std::endl;
+		std::cout << "setupPad4ModeGlobal Reply: " << response.reply() << std::endl;
+	}
+
+	response = client.enablePad4Global(session_id, true);
+	if (response.status()) {
+		std::cout << "enablePad4Global Status: " << response.status() << std::endl;
+		std::cout << "enablePad4Global Message: " << response.message() << std::endl;
+		std::cout << "enablePad4Global Reply: " << response.reply() << std::endl;
 	}
 
 	/*
