@@ -18,10 +18,16 @@ struct DataEntry {
 std::vector<DataEntry> parseFile(const std::string& filename) {
     std::vector<DataEntry> data;
     std::ifstream file(filename);
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+
+    // Replace CR with LF to make std::getline work as expected
+    std::replace(content.begin(), content.end(), '\r', '\n');
+
+    std::stringstream ss(content);
     std::string line;
 
     // Find header line
-    while (std::getline(file, line)) {
+    while (std::getline(ss, line)) {
         if (line.find("Number") != std::string::npos && line.find("Frequency/Hz") != std::string::npos) {
             break; // Found header, exit loop
         }
