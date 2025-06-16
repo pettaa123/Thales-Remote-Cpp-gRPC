@@ -9,6 +9,7 @@
 #include "thalesfileinterface.h"
 #include "zahner.grpc.pb.h"
 #include "zahnerzenniumserviceimpl.h"
+#include "ism_txt_parser.h"
 
 using namespace zahner;
 
@@ -98,6 +99,28 @@ public:
 
 		for (const auto& entry : std::filesystem::directory_iterator(path)) {
 			response->add_files(entry.path().string());
+		}
+
+		return grpc::Status::OK;
+	}
+
+	grpc::Status ParseFiles(grpc::ServerContext* context, const ParseRequest* request, ParseResponse* response) override {
+		std::string directoryPath = request->directory_path();
+		std::vector<std::string> csvFiles;
+		if (!fs::exists(directoryPath)) {
+			return grpc::Status(grpc::INVALID_ARGUMENT, "Directory does not exist");
+		}
+
+		for (const auto& entry : fs::directory_iterator(directoryPath)) {
+			if (entry.is_regular_file() && entry.path().extension() == ".txt") {
+				std::vector<DataEntry> fileData = parseFile(entry.path().string());
+				std::string csvFilename = writeToCSV(entry.path().stem().string(), fileData);
+				csvFiles.push_back(csvFilename);
+			}
+		}
+
+		for (const auto& filename : csvFiles) {
+			response->add_csv_filenames(filename);
 		}
 
 		return grpc::Status::OK;

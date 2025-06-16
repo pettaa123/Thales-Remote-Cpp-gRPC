@@ -141,6 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="connection_manager.h" />
+    <ClInclude Include="ism_txt_parser.h" />
     <ClInclude Include="thalesfileserviceimpl.h" />
     <ClInclude Include="zahnerzenniumserviceimpl.h" />
   </ItemGroup>

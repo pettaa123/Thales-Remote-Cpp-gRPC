@@ -65,6 +65,15 @@ service ThalesFile {
     rpc DeleteReceivedFiles (SessionRequest) returns (StringResponse);
     rpc DownloadFile(FileRequest) returns (stream FileChunk);
     rpc ListFiles (DirectoryRequest) returns (DirectoryResponse);
+    rpc ParseFiles(ParseRequest) returns (ParseResponse);
+}
+
+message ParseRequest {
+    string directory_path = 1; // Path to the directory containing .txt files
+}
+
+message ParseResponse {
+    repeated string csv_filenames = 1; // List of generated CSV filenames
 }
 
 message DirectoryResponse {

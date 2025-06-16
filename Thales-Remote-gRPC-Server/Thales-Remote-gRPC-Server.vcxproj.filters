@@ -35,5 +35,8 @@
     <ClInclude Include="thalesfileserviceimpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ism_txt_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
