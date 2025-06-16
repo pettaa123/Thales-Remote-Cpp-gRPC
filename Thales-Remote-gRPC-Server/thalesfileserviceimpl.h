@@ -114,7 +114,7 @@ public:
 		for (const auto& entry : fs::directory_iterator(directoryPath)) {
 			if (entry.is_regular_file() && entry.path().extension() == ".txt") {
 				std::vector<DataEntry> fileData = parseFile(entry.path().string());
-				std::string csvFilename = writeToCSV(entry.path().stem().string(), fileData);
+				std::string csvFilename = writeToCSV(directoryPath, entry.path().stem().string(), fileData);
 				csvFiles.push_back(csvFilename);
 			}
 		}
