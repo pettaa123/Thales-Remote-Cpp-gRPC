@@ -73,6 +73,7 @@ public:
 		}
 
 		response->set_session_id(request->session_id());
+		std::cout << "FileInterface Client Connected" << std::endl;
 
 		return grpc::Status::OK;
 	}
@@ -119,31 +120,35 @@ public:
 		return grpc::Status::OK;
 	}
 
-	grpc::Status AcquireFile(grpc::ServerContext* context, const AcquireFileRequest* request, FileObjectResponse* response) override {
-		auto connection = connectionManager_.getConnection(request->session_id());
-		if (!connection) {
-			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
-		}
-
-		try {
-			ThalesFileInterface::FileObject reply = connection->acquireFile(request->filename());
-
-			// Dynamically allocate FileObject
-			zahner::FileObject* z_FileObject = new zahner::FileObject();
-			z_FileObject->set_name(reply.name);
-			z_FileObject->set_path(reply.path);
-			z_FileObject->set_binary_data(reply.binary_data);
-
-			// Pass ownership to response
-			response->set_allocated_file(z_FileObject);
-		}
-		catch (const std::exception& e) {
-			std::cout << "Exception in AcquireFile: " << e.what() << std::endl;
-			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("AcquireFile failed: ") + e.what());
-		}
-
-		return grpc::Status::OK;
-	}
+	//grpc::Status AcquireFile(grpc::ServerContext* context, const AcquireFileRequest* request, FileObjectResponse* response) override {
+	//	auto connection = connectionManager_.getConnection(request->session_id());
+	//	if (!connection) {
+	//		return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
+	//	}
+	//
+	//	try {
+	//		ThalesFileInterface::FileObject reply = connection->acquireFile(request->filename());
+	//
+	//
+	//		// Dynamically allocate FileObject
+	//		zahner::FileObject* z_FileObject = new zahner::FileObject();
+	//		z_FileObject->set_name(reply.name);
+	//		z_FileObject->set_path(reply.path);
+	//		//z_FileObject->set_binary_data(
+	//		//	reply.binary_data.data(),
+	//		//	static_cast<int>(reply.binary_data.size())
+	//		//);
+	//
+	//		// Transfer ownership of the allocated FileObject to the response
+	//		response->set_allocated_file(z_FileObject);
+	//	}
+	//	catch (const std::exception& e) {
+	//		std::cout << "Exception in AcquireFile: " << e.what() << std::endl;
+	//		return grpc::Status(grpc::StatusCode::INTERNAL, std::string("AcquireFile failed: ") + e.what());
+	//	}
+	//
+	//	return grpc::Status::OK;
+	//}
 
 	grpc::Status EnableSaveReceivedFilesToDisk(grpc::ServerContext* context, const EnableSaveReceivedFilesToDiskRequest* request, StringResponse* response) override {
 		auto connection = connectionManager_.getConnection(request->session_id());
@@ -232,33 +237,32 @@ public:
 		return grpc::Status::OK;
 	}
 
-	grpc::Status GetReceivedFiles(grpc::ServerContext* context, const SessionRequest* request, FileObjectsResponse* response) override {
-		auto connection = connectionManager_.getConnection(request->session_id());
-		if (!connection) {
-			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
-		}
-
-		try {
-			const std::vector<ThalesFileInterface::FileObject>& reply = connection->getReceivedFiles();
-
-			// Populate response->files with received files
-			for (const auto& file : reply) {
-				zahner::FileObject* z_FileObject = response->add_files();
-				z_FileObject->set_name(file.name);
-				z_FileObject->set_path(file.path);
-				z_FileObject->set_binary_data(file.binary_data);
-			}
-		}
-		catch (const std::exception& e) {
-			std::cout << "Exception in GetReceivedFiles: " << e.what() << std::endl;
-			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("GetReceivedFiles failed: ") + e.what());
-		}
-
-		return grpc::Status::OK;
-	}
+	//grpc::Status GetReceivedFiles(grpc::ServerContext* context, const SessionRequest* request, FileObjectsResponse* response) override {
+	//	auto connection = connectionManager_.getConnection(request->session_id());
+	//	if (!connection) {
+	//		return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesFileInterface instance.");
+	//	}
+	//
+	//	try {
+	//		const std::vector<ThalesFileInterface::FileObject>& reply = connection->getReceivedFiles();
+	//
+	//		// Populate response->files with received files
+	//		for (const auto& file : reply) {
+	//			zahner::FileObject* z_FileObject = response->add_files();
+	//			z_FileObject->set_name(file.name);
+	//			z_FileObject->set_path(file.path);
+	//			z_FileObject->set_binary_data(file.binary_data);
+	//		}
+	//	}
+	//	catch (const std::exception& e) {
+	//		std::cout << "Exception in GetReceivedFiles: " << e.what() << std::endl;
+	//		return grpc::Status(grpc::StatusCode::INTERNAL, std::string("GetReceivedFiles failed: ") + e.what());
+	//	}
+	//
+	//	return grpc::Status::OK;
+	//}
 
 
 private:
 	thalesfile::ConnectionManager& connectionManager_;
 };
-}
