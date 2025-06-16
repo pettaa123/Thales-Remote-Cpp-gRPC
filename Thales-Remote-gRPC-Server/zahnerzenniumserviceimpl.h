@@ -11,22 +11,30 @@ public:
 	explicit ZahnerZenniumServiceImpl(ConnectionManager& manager) : connectionManager_(manager) {}
 
 	grpc::Status ConnectToTerm(grpc::ServerContext* context, const ConnectRequest* request, ConnectResponse* response) override {
-		auto connection = connectionManager_.createConnection(request->session_id(), request->host(), request->selected_mode());
-		if (!connection) {
-			return grpc::Status(grpc::StatusCode::INTERNAL, "Failed to establish connection.");
+		try {
+			auto connection = connectionManager_.createConnection(request->session_id(), request->host(), request->selected_mode());
+			auto wrapper = connectionManager_.createWrapper(request->session_id());
 		}
-
-		auto wrapper = connectionManager_.createWrapper(request->session_id());
-		if (!wrapper) {
-			return grpc::Status(grpc::StatusCode::INTERNAL, "Wrapper initialization failed.");
+		catch (std::exception& e) {
+			std::cout << e.what() << " - ThalesXT App running?" << std::endl;
+			return grpc::Status(grpc::StatusCode::INTERNAL, e.what());
 		}
 		response->set_session_id(request->session_id());
+		std::cout << "Client Connected" << std::endl;
 
 		return grpc::Status::OK;
 	}
 
 	grpc::Status DisconnectFromTerm(grpc::ServerContext* context, const SessionRequest* request, DisconnectResponse* response) override {
-		connectionManager_.removeSession(request->session_id());
+		try {
+			connectionManager_.removeSession(request->session_id());
+		}
+		catch (std::exception& e) {
+			std::cout << "Exception in DisconnectFromTerm: " << e.what() << std::endl;
+			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("MeasureEIS failed: ") + e.what());
+		}
+		std::cout << "Client Disconnected" << std::endl;
+
 		return grpc::Status::OK;
 	}
 
@@ -41,6 +49,7 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in MeasureEIS: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("MeasureEIS failed: ") + e.what());
 		}
 
@@ -58,9 +67,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetEISOutputPath: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetEISOutputPath failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -76,9 +85,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetEISNaming: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetEISNamingRule failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -94,9 +103,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetEISCounter: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetEISCounter failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -108,13 +117,13 @@ public:
 
 		try {
 			std::string reply = wrapper->setEISOutputFileName(request->name());
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetEISOutputFilename: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetEISOutputFileName failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -126,13 +135,13 @@ public:
 
 		try {
 			std::string reply = wrapper->setLowerFrequencyLimit(request->frequency());
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetLowerFrequencyLimit: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetLowerFrequencyLimit failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -144,13 +153,13 @@ public:
 
 		try {
 			std::string reply = wrapper->setUpperFrequencyLimit(request->frequency());
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetUpperFrequencyLimit: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetUpperFrequencyLimit failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -162,13 +171,13 @@ public:
 
 		try {
 			std::string reply = wrapper->setLowerNumberOfPeriods(request->periods());
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetLowerNumberOfPeriods: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetLowerNumberOfPeriods failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -180,13 +189,13 @@ public:
 
 		try {
 			std::string reply = wrapper->setLowerStepsPerDecade(request->steps());
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetLowerStepsPerDecade: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetLowerStepsPerDecade failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -198,13 +207,13 @@ public:
 
 		try {
 			std::string reply = wrapper->setUpperNumberOfPeriods(request->periods());
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetUpperNumberOfPeriods: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetUpperNumberOfPeriods failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -216,10 +225,11 @@ public:
 
 		try {
 			std::string reply = wrapper->setStartFrequency(request->frequency());
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetStartFrequency: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetStartFrequencyRequest failed: ") + e.what());
 		}
 		return grpc::Status::OK;
@@ -233,20 +243,19 @@ public:
 
 		try {
 			std::string reply = wrapper->setScanDirection((ScanDirection)request->direction());
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetScanDirection: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetScanDirection failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
 	grpc::Status SetScanStrategy(grpc::ServerContext* context, const ::zahner::SetScanStrategyRequest* request, StringResponse* response) override {
 		auto wrapper = connectionManager_.getWrapper(request->session_id());
 		if (!wrapper) {
-			std::cout << "Failed to retrieve ThalesRemoteScriptWrapper instance." << std::endl;
 			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
 		}
 
@@ -255,9 +264,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetScanStrategy: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetScanStrategy failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -269,13 +278,13 @@ public:
 
 		try {
 			std::string reply = wrapper->setUpperStepsPerDecade(request->steps());
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetUpperStepsPerDecade: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetUpperStepsPerDecade failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -290,9 +299,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const ThalesRemoteError& error) {
+			std::cout << "Exception in SetupPad4Channel: " << error.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetupPad4Channel failed: ") + error.getMessage());
 		}
-
 		return grpc::Status::OK;
 	}
 	/** Setting a single channel of a PAD4 card for an EIS measurement.
@@ -316,13 +325,13 @@ public:
 		}
 
 		try {
-			std::string reply = wrapper->setupPad4ChannelWithVoltageRange(request->card(), request->channel(), request->enabled(),request->voltage_range());
+			std::string reply = wrapper->setupPad4ChannelWithVoltageRange(request->card(), request->channel(), request->enabled(), request->voltage_range());
 			response->set_reply(reply);
 		}
 		catch (const ThalesRemoteError& error) {
+			std::cout << "Exception in SetupPad4ChannelWithVoltageRange: " << error.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetupPad4ChannelWithVoltageRange failed: ") + error.getMessage());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -334,13 +343,12 @@ public:
 
 		try {
 			std::string reply = wrapper->setupPad4ModeGlobal((Pad4Mode)request->mode());
-			
 			response->set_reply(reply);
 		}
 		catch (const ThalesRemoteError& error) {
+			std::cout << "Exception in SetupPad4ModeGlobal: " << error.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("SetupPad4ModeGlobal failed: ") + error.getMessage());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -351,13 +359,13 @@ public:
 		}
 
 		try {
-			std::string reply = wrapper->enablePad4Global(request->enabled());			
+			std::string reply = wrapper->enablePad4Global(request->enabled());
 			response->set_reply(reply);
 		}
 		catch (const ThalesRemoteError& error) {
+			std::cout << "Exception in EnablePad4Global: " << error.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("EnablePad4Global failed: ") + error.getMessage());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -379,9 +387,9 @@ public:
 			response->set_timestamp(timestamp);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in GetImpedancePad4Simple: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("GetImpedancePad4Simple failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -392,7 +400,7 @@ public:
 		}
 
 		try {
-			std::string reply = wrapper->getImpedancePad4(request->frequency(),request->amplitude(), request->num_periods());
+			std::string reply = wrapper->getImpedancePad4(request->frequency(), request->amplitude(), request->num_periods());
 			std::string timestamp = getISOCurrentTimestamp();
 			std::complex<double> impedance; stringToComplex(reply);
 			auto response_impedance = std::make_unique<ComplexNumber>();
@@ -402,9 +410,9 @@ public:
 			response->set_timestamp(timestamp);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in GetImpedancePad4: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("GetImpedancePad4 failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -416,13 +424,13 @@ public:
 
 		try {
 			std::string reply = wrapper->calibrateOffsets();
-			
+
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in CalibrateOffsets: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Calibration failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -437,9 +445,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetPotentioStatMode: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Setting potentiostat mode failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -454,9 +462,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetPotential: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Setting potential failed: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -472,9 +480,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in EnablePotentiostat: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to enable potentiostat: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -490,9 +498,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in DisablePotentiostat: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to disable potentiostat: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -505,12 +513,14 @@ public:
 
 		try {
 			double potential = wrapper->getPotential();
+			std::string timestamp = getISOCurrentTimestamp();
 			response->set_potential(potential);
+			response->set_timestamp(timestamp);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in GetPotential: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to retrieve potential: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -523,12 +533,14 @@ public:
 
 		try {
 			double current = wrapper->getCurrent();
+			std::string timestamp = getISOCurrentTimestamp();
 			response->set_current(current);
+			response->set_timestamp(timestamp);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in GetCurrent: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to retrieve current: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -544,9 +556,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SelectPotentiostat: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to set potentiostat device: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -562,6 +574,7 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetFrequency: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to set frequency: ") + e.what());
 		}
 
@@ -582,6 +595,7 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetAmplitude: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to set amplitude: ") + e.what());
 		}
 
@@ -600,9 +614,9 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetCurrent: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to set current: ") + e.what());
 		}
-
 		return grpc::Status::OK;
 	}
 
@@ -618,6 +632,7 @@ public:
 			response->set_reply(reply);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in SetNumberOfPeriods: " << e.what();
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to set number of periods: ") + e.what());
 		}
 
@@ -632,15 +647,16 @@ public:
 		}
 
 		try {
-			 std::complex<double> impedance = wrapper->getImpedance();
-			 std::string timestamp = getISOCurrentTimestamp();
-			 auto response_impedance = std::make_unique<ComplexNumber>();
-			 response_impedance->set_real(impedance.real());
-			 response_impedance->set_imag(impedance.imag());
-			 response->set_allocated_impedance(response_impedance.release());
-			 response->set_timestamp(timestamp);
+			std::complex<double> impedance = wrapper->getImpedance();
+			std::string timestamp = getISOCurrentTimestamp();
+			auto response_impedance = std::make_unique<ComplexNumber>();
+			response_impedance->set_real(impedance.real());
+			response_impedance->set_imag(impedance.imag());
+			response->set_allocated_impedance(response_impedance.release());
+			response->set_timestamp(timestamp);
 		}
 		catch (const std::exception& e) {
+			std::cout << "Exception in GetImpedance: " << e.what() << std::endl;
 			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Failed to retrieve impedance: ") + e.what());
 		}
 

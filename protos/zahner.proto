@@ -63,6 +63,24 @@ service ThalesFile {
     rpc GetLatestReceivedFile (SessionRequest) returns (FileObjectResponse);
     rpc SaveReceivedFile (SaveReceivedFileRequest) returns (StringResponse);
     rpc DeleteReceivedFiles (SessionRequest) returns (StringResponse);
+    rpc DownloadFile(FileRequest) returns (stream FileChunk);
+    rpc ListFiles (DirectoryRequest) returns (DirectoryResponse);
+}
+
+message DirectoryResponse {
+  repeated string files = 1;
+}
+
+message DirectoryRequest {
+  string path = 1;
+}
+
+message FileRequest {
+  string file_path = 1;
+}
+
+message FileChunk {
+  bytes data = 1;
 }
 
 message SelectPotentiostatRequest {
@@ -342,12 +360,14 @@ message PotentialResponse {
     int32 status = 1;
     string message = 2;
     double potential = 3;
+    string timestamp = 4;
 }
 
 message CurrentResponse {
     int32 status = 1;
     string message = 2;
     double current = 3;
+    string timestamp = 4;
 }
 
 message ImpedanceResponse {

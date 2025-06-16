@@ -14,6 +14,20 @@ void RunSingleFrequencyImpedanceMeasurement(){
 	//conRequest.set_host(host);
 	//conRequest.set_selected_mode(mode);
 
+	DisconnectResponse discoResponse = client.disconnectFromTerm(session_id);
+	if (discoResponse.status()) {
+		std::cout << "Connection Response Status: " << discoResponse.status() << std::endl;
+		std::cout << "Connection Response Message: " << discoResponse.message() << std::endl;
+	}
+
+
+	ConnectResponse cResponse = client.connectToTerm(session_id, host, mode);
+	if (cResponse.status()) {
+		std::cout << "Connection Response Status: " << cResponse.status() << std::endl;
+		std::cout << "Connection Response Message: " << cResponse.message() << std::endl;
+	}
+
+
 	ConnectResponse cResponse = client.connectToTerm(session_id,host,mode);
 	if (cResponse.status()) {
 		std::cout << "Connection Response Status: " << cResponse.status() << std::endl;

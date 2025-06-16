@@ -864,7 +864,7 @@ public:
 		grpc::ClientContext context;
 
 
-		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(5000));  // 5-second timeout
+		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(60000));  // 5-second timeout
 		grpc::Status status = stub_->GetImpedancePad4Simple(&context, request, &response);
 		// Returns results based on RPC status
 		if (status.ok()) {
@@ -947,7 +947,7 @@ public:
 		StringResponse response;
 		grpc::ClientContext context;
 
-		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(10000));  // 10-second timeout
+		context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(20000));  // 10-second timeout
 		grpc::Status status = stub_->SelectPotentiostat(&context, request, &response);
 		// Returns results based on RPC status
 		if (status.ok()) {
