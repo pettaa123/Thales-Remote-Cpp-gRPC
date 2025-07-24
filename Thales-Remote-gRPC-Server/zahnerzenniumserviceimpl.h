@@ -369,7 +369,7 @@ public:
 		return grpc::Status::OK;
 	}
 
-	grpc::Status GetImpedancePad4Simple(grpc::ServerContext* context, const ::zahner::ImpedancePad4SimpleRequest* request, ImpedanceResponse* response) override {
+	grpc::Status GetImpedancePad4Simple(grpc::ServerContext* context, const ::zahner::ImpedancePad4SimpleRequest* request, ImpedancePad4Response* response) override {
 		auto wrapper = connectionManager_.getWrapper(request->session_id());
 		if (!wrapper) {
 			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
@@ -378,11 +378,16 @@ public:
 		try {
 			std::string reply = wrapper->getImpedancePad4(request->frequency());
 			std::string timestamp = getISOCurrentTimestamp();
-			std::complex<double> impedance = stringToComplex(reply);
-			auto response_impedance = new ComplexNumber();
-			response_impedance->set_real(impedance.real());
-			response_impedance->set_imag(impedance.imag());
-			response->set_allocated_impedance(response_impedance);
+			std::vector<std::complex<double>> impedances = pad4StringToComplex(reply);
+
+			auto* vector_response = response->mutable_impedances();
+			for (const auto& z : impedances) {
+				ComplexNumber* cn = vector_response->add_values();
+				cn->set_real(z.real());
+				cn->set_imag(z.imag());
+			}
+
+			response->set_timestamp(timestamp);
 			response->set_timestamp(timestamp);
 		}
 		catch (const std::exception& e) {
@@ -392,7 +397,7 @@ public:
 		return grpc::Status::OK;
 	}
 
-	grpc::Status GetImpedancePad4(grpc::ServerContext* context, const ::zahner::ImpedancePad4Request* request, ImpedanceResponse* response) override {
+	grpc::Status GetImpedancePad4(grpc::ServerContext* context, const ::zahner::ImpedancePad4Request* request, ImpedancePad4Response* response) override {
 		auto wrapper = connectionManager_.getWrapper(request->session_id());
 		if (!wrapper) {
 			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
@@ -401,11 +406,15 @@ public:
 		try {
 			std::string reply = wrapper->getImpedancePad4(request->frequency(), request->amplitude(), request->num_periods());
 			std::string timestamp = getISOCurrentTimestamp();
-			std::complex<double> impedance; pad4StringToComplex(reply);
-			auto response_impedance = std::make_unique<ComplexNumber>();
-			response_impedance->set_real(impedance.real());
-			response_impedance->set_imag(impedance.imag());
-			response->set_allocated_impedance(response_impedance.release());
+			std::vector<std::complex<double>> impedances = pad4StringToComplex(reply);
+			
+			auto* vector_response = response->mutable_impedances();
+			for (const auto& z : impedances) {
+				ComplexNumber* cn = vector_response->add_values();
+				cn->set_real(z.real());
+				cn->set_imag(z.imag());
+			}
+			
 			response->set_timestamp(timestamp);
 		}
 		catch (const std::exception& e) {
