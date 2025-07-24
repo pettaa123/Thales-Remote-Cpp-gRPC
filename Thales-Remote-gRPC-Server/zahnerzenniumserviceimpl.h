@@ -378,7 +378,6 @@ public:
 		try {
 			std::string reply = wrapper->getImpedancePad4(request->frequency());
 			std::string timestamp = getISOCurrentTimestamp();
-			std::cout << timestamp << " : " << reply;
 			std::complex<double> impedance = stringToComplex(reply);
 			auto response_impedance = new ComplexNumber();
 			response_impedance->set_real(impedance.real());
@@ -402,7 +401,7 @@ public:
 		try {
 			std::string reply = wrapper->getImpedancePad4(request->frequency(), request->amplitude(), request->num_periods());
 			std::string timestamp = getISOCurrentTimestamp();
-			std::complex<double> impedance; stringToComplex(reply);
+			std::complex<double> impedance; pad4StringToComplex(reply);
 			auto response_impedance = std::make_unique<ComplexNumber>();
 			response_impedance->set_real(impedance.real());
 			response_impedance->set_imag(impedance.imag());
@@ -681,6 +680,38 @@ private:
 		iss >> imag;
 
 		return std::complex<double>(real, imag);
+	}
+
+	//converts pad4 return string in the form of:
+	// impedance= -1.640e-02, 8.926e-03;pad01= -1.745e-01,-1.380e-01;pad02= -1.004e-01,-9.176e-02;pad03=  0.000e+00, 0.000e+00;
+	// pad04=  0.000e+00, 0.000e+00;pad05=  0.000e+00, 0.000e+00;pad06=  0.000e+00, 0.000e+00;pad07=  0.000e+00, 0.000e+00;
+	// pad08=  0.000e+00, 0.000e+00;pad09=  0.000e+00, 0.000e+00;pad10=  0.000e+00, 0.000e+00;pad11=  0.000e+00, 0.000e+00;
+	// pad12=  0.000e+00, 0.000e+00;pad13=  0.000e+00, 0.000e+00;pad14=  0.000e+00, 0.000e+00;pad15=  0.000e+00, 0.000e+00;
+	// pad16=  0.000e+00, 0.000e+00
+
+	std::vector<std::complex<double>> pad4StringToComplex(const std::string& str) {
+		double real = 0, imag = 0;
+		// Temporary to store the splitted string
+		std::string temp;
+
+		std::istringstream iss(str);
+
+		std::string inputLabel;
+
+		std::vector<std::complex<double>> parsedInputs;
+		//Reads a substring from iss(which holds the entire input string) up to the next ';' character.
+		while (getline(iss, temp, ';')) {
+			// Split single input
+			std::istringstream singleInput(temp);
+			// Extract label and values
+			std::getline(singleInput, inputLabel, '=');
+			singleInput >> real;
+			singleInput.ignore(); // Ignore the comma
+			singleInput >> imag;
+			parsedInputs.push_back(std::complex<double>(real, imag));
+		}
+
+		return parsedInputs;
 	}
 
 	std::string getISOCurrentTimestamp() {

@@ -145,6 +145,9 @@
     <ClInclude Include="thalesfileserviceimpl.h" />
     <ClInclude Include="zahnerzenniumserviceimpl.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\protos\zahner.proto" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

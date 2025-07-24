@@ -21,8 +21,8 @@ service ZahnerZennium {
     rpc EnablePotentiostat (EnablePotentiostatRequest) returns (StringResponse);
     rpc DisablePotentiostat (SessionRequest) returns (StringResponse);
     rpc GetImpedance (ImpedanceRequest) returns (ImpedanceResponse);
-    rpc GetImpedancePad4Simple (ImpedancePad4SimpleRequest) returns (ImpedanceResponse); 
-    rpc GetImpedancePad4 (ImpedancePad4Request) returns (ImpedanceResponse); 
+    rpc GetImpedancePad4Simple (ImpedancePad4SimpleRequest) returns (ImpedancePad4Response); 
+    rpc GetImpedancePad4 (ImpedancePad4Request) returns (ImpedancePad4Response); 
     rpc SetEISNaming (SetEISNamingRequest) returns (StringResponse);
     rpc SetEISCounter (SetEISCounterRequest) returns (StringResponse);
     rpc SetEISOutputPath (SetEISOutputPathRequest) returns (StringResponse);
@@ -343,6 +343,10 @@ message ComplexNumber {
     double imag = 2;
 }
 
+message ComplexVector {
+  repeated ComplexNumber values = 1;
+}
+
 message ConnectRequest {
     string session_id = 1;
     string host = 2;
@@ -383,6 +387,13 @@ message ImpedanceResponse {
     int32 status = 1;
     string message = 2;
     ComplexNumber impedance = 3;
+    string timestamp = 4;
+}
+
+message ImpedancePad4Response {
+    int32 status = 1;
+    string message = 2;
+    ComplexVector impedances = 3;
     string timestamp = 4;
 }
 
