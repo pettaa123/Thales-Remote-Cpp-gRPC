@@ -15,6 +15,7 @@ service ZahnerZennium {
     rpc GetCurrent (SessionRequest) returns (CurrentResponse);
     rpc SetCurrent (SetCurrentRequest) returns (StringResponse);
     rpc SetPotentiostatMode (ModeRequest) returns (StringResponse);
+    rpc SetVoltageRangeIndex (VoltageRangeIndexRequest) returns (StringResponse);
     rpc SetFrequency (FrequencyRequest) returns (StringResponse);
     rpc SetAmplitude (AmplitudeRequest) returns (StringResponse);
     rpc SetNumberOfPeriods (PeriodsRequest) returns (StringResponse);
@@ -95,6 +96,11 @@ message FileChunk {
 message SelectPotentiostatRequest {
     string session_id = 1;
     int32 device = 2;
+}
+
+message VoltageRangeIndexRequest {
+    string session_id = 1;
+    int32 index = 2;
 }
 
 message SetPotentialRequest {

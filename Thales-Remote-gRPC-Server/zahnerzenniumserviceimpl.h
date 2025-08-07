@@ -459,6 +459,23 @@ public:
 		return grpc::Status::OK;
 	}
 
+	grpc::Status SetVoltageRangeIndex(grpc::ServerContext* context, const VoltageRangeIndexRequest* request, StringResponse* response) override {
+		auto wrapper = connectionManager_.getWrapper(request->session_id());
+		if (!wrapper) {
+			return grpc::Status(grpc::StatusCode::NOT_FOUND, "Failed to retrieve ThalesRemoteScriptWrapper instance.");
+		}
+
+		try {
+			std::string reply = wrapper->setVoltageRangeIndex(request->index());
+			response->set_reply(reply);
+		}
+		catch (const std::exception& e) {
+			std::cout << "Exception in SetVoltageRangeIndex: " << e.what() << std::endl;
+			return grpc::Status(grpc::StatusCode::INTERNAL, std::string("Setting VoltageRangeIndex failed: ") + e.what());
+		}
+		return grpc::Status::OK;
+	}
+
 	grpc::Status SetPotential(grpc::ServerContext* context, const SetPotentialRequest* request, StringResponse* response) override {
 		auto wrapper = connectionManager_.getWrapper(request->session_id());
 		if (!wrapper) {
